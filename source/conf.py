@@ -33,9 +33,9 @@ extensions = [
     'symbolator_sphinx',
     'sphinxcontrib.images',
     'sphinxcontrib.bibtex',
-    'sdcdomain',
-    'archdomain',
-    'rrgraphdomain',
+    #'sdcdomain',
+    #'archdomain',
+    #'rrgraphdomain',
     'recommonmark'
 ]
 
