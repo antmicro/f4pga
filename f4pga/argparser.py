@@ -141,6 +141,7 @@ def setup_argparser():
     _setup_build_parser(subparsers.add_parser('build'))
     show_dep = subparsers.add_parser('showd', description='Show the value(s) assigned to a dependency')
     _setup_show_dep_parser(show_dep)
+    install = subparsers.add_parser('install')
 
     return parser
 

@@ -43,7 +43,10 @@ from sys import argv as sys_argv
 from os import environ
 from json import load as json_load, loads as json_loads
 from typing import Iterable
+from click import command
 from colorama import Fore, Style
+
+from f4pga import installer
 
 from f4pga.common import (
     ResolutionEnv,
@@ -73,7 +76,7 @@ SYMBICACHEPATH = '.symbicache'
 binpath = str(Path(sys_argv[0]).resolve().parent.parent)
 mypath = str(Path(__file__).resolve().parent)
 
-share_dir_path = str(Path(f"{environ.get('F4PGA_INSTALL_DIR', '/usr/local')}/xc7/install/share/symbiflow").resolve())
+share_dir_path = str(Path(f"{environ.get('F4PGA_INSTALL_DIR', '/usr/local')}/share/symbiflow").resolve())
 
 class DependencyNotProducedException(Exception):
     dep_name: str
@@ -516,7 +519,7 @@ def open_project_flow_config(path: str) -> ProjectFlowConfig:
         fatal(-1, 'The provided flow configuration file does not exist')
     return flow_cfg
 
-def verify_platform_stage_params(flow_cfg: FlowConfig,
+def verify_platform_stage_params(args, flow_cfg: FlowConfig,
                                  platform: 'str | None' = None,
                                  stage: 'str | None' = None):
     if platform:
@@ -634,7 +637,7 @@ def cmd_show_dependencies(args: Namespace):
 
     flow_cfg = open_project_flow_config(args.flow)
 
-    if not verify_platform_stage_params(flow_cfg, args.platform):
+    if not verify_platform_stage_params(args, flow_cfg, args.platform):
         sfbuild_fail()
         return
 
@@ -676,6 +679,10 @@ def main():
 
     if args.command == 'showd':
         cmd_show_dependencies(args)
+        sfbuild_done()
+    
+    if args.command == 'install':
+        installer.main()
         sfbuild_done()
 
     sfprint(0, 'Please use a command.\nUse `--help` flag to learn more.')
