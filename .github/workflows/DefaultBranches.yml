@@ -1,0 +1,32 @@
+name: Default branches
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+
+
+  CheckDefaultBranches:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        org:
+          - SymbiFlow
+          - antmicro
+          - f4pga
+          - chipsalliance
+
+    steps:
+
+      - run: pip install PyGithub
+
+      - shell: python
+        run: |
+          from subprocess import check_call
+          from github import Github
+          g = Github("${{ github.token }}")
+          for repo in g.get_organization("${{ matrix.org }}").get_repos(type='all'):
+              if repo.default_branch == 'master':
+                  check_call(f"echo '- [{repo.name}](https://github.com/${{ matrix.org }}/{repo.name}/settings/branches): {repo.default_branch}' >> $GITHUB_STEP_SUMMARY", shell=True)
