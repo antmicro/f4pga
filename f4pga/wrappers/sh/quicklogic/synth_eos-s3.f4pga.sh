@@ -21,9 +21,21 @@ set -e
 MYPATH=`realpath $0`
 MYDIR=`dirname $MYPATH`
 
+source ${MYDIR}/../common.f4pga.sh
+
 export SHARE_DIR_PATH=${SHARE_DIR_PATH:="$F4PGA_SHARE_DIR"}
-SPLIT_INOUTS=`realpath ${F4PGA_SHARE_DIR}/scripts/split_inouts.py`
-CONVERT_OPTS=`realpath ${F4PGA_SHARE_DIR}/scripts/convert_compile_opts.py`
+
+export UTILS_PATH=${SHARE_DIR_PATH}/scripts
+
+F4PGA_AUX_PATH=`realpath ${MYDIR}/../../../aux`
+F4PGA_EXEC_TCL_PATH=${F4PGA_AUX_PATH}/tool_data/yosys/scripts/common/f4pga_exec.tcl
+F4PGA_COMMON_TCL_PATH=${F4PGA_AUX_PATH}/tool_data/yosys/scripts/common/common.tcl
+SYNTH_TCL_PATH=${F4PGA_AUX_PATH}/tool_data/yosys/scripts/vendor/quicklogic/pp3/synth.tcl
+CONV_TCL_PATH=${F4PGA_AUX_PATH}/tool_data/yosys/scripts/vendor/quicklogic/pp3/conv.tcl
+
+VPRPATH=${VPRPATH:="$F4PGA_BIN_DIR"}
+SPLIT_INOUTS=`realpath ${SHARE_DIR_PATH}/scripts/split_inouts.py`
+CONVERT_OPTS=`realpath ${SHARE_DIR_PATH}/scripts/convert_compile_opts.py`
 
 print_usage () {
     echo "Usage: symbiflow_synth  -v|--verilog <Verilog file list>"
@@ -113,13 +125,6 @@ for arg in $@; do
 
 done
 
-if [ ${DEVICE} == "ql-eos-s3" ]; then
-    # EOS-s3 needs a different wrapping method because it requires to bind to the new f4pga
-    # interface.
-    bash ${MYDIR}/synth_eos-s3.f4pga.sh $@
-    exit
-fi
-
 if [ -z ${FAMILY} ]; then
     echo "Please specify device family"
     exit 1
@@ -132,61 +137,60 @@ fi
 
 PINMAPCSV="pinmap_${PART}.csv"
 
-export TECHMAP_PATH="${F4PGA_SHARE_DIR}/techmaps/${FAMILY}"
+TMP_DIR=`make_tmp_dir 16 yosys_tmp_legacy_`
 
-SYNTH_TCL_PATH="$(python3 -m f4pga.wrappers.tcl synth "${FAMILY}")"
-CONV_TCL_PATH="$(python3 -m f4pga.wrappers.tcl conv "${FAMILY}")"
+export TECHMAP_PATH="${SHARE_DIR_PATH}/techmaps/${FAMILY}"
 
-export USE_ROI="FALSE"
-export OUT_JSON=$TOP.json
-export SYNTH_JSON=${TOP}_io.json
-export OUT_SYNTH_V=${TOP}_synth.v
-export OUT_EBLIF=${TOP}.eblif
-export OUT_FASM_EXTRA=${TOP}_fasm_extra.fasm
-export PYTHON3=$(which python3)
-export UTILS_PATH="${F4PGA_SHARE_DIR}"/scripts
+DEVICE_PATH="${SHARE_DIR_PATH}/arch/${DEVICE}_wlcsp"
 
-if [ -s $PCF ]; then
-    export PCF_FILE=$PCF
-else
-    export PCF_FILE=""
-fi
+export VAL_top=$TOP
+export VAL_part_name=${PART}
+export VAL_python3=${PYHON3:=$(which python3)}
+export VAL_shareDir=$SHARE_DIR_PATH
+export VAL_yosys_plugins=$YOSYS_PLUGINS
+export VAL_surelog_cmd=${SURELOG_CMD[*]}
+export VAL_pinmap=${DEVICE_PATH}/${PINMAPCSV}
+export TMP_json_org=${TMP_DIR}/json_org.json
+export TMP_json_premapped=${TMP_DIR}/json_premapped.json
+export DEP_sources=${VERILOG_FILES[*]}
+export DEP_build_dir="build"
+export DEP_json=${TOP}.json
+export DEP_synth_json=${TOP}_io.json
+export DEP_pcf=$PCF
+export DEP_synth_v=${TOP}_synth.v
+export DEP_eblif=${TOP}.eblif
 
-DEVICE_PATH="${F4PGA_SHARE_DIR}/arch/${DEVICE}_${DEVICE}"
-export PINMAP_FILE=${DEVICE_PATH}/${PINMAPCSV}
-if [ -d "${DEVICE_PATH}/cells" ]; then
-  export DEVICE_CELLS_SIM=`find ${DEVICE_PATH}/cells -name "*_sim.v"`
-  export DEVICE_CELLS_MAP=`find ${DEVICE_PATH}/cells -name "*_map.v"`
-else
-  # pp3 family has different directory naming scheme
-  # the are named as ${DEVICE}_${PACKAGE}
-  # ${PACKAGE} is not known because it is not passed down in add_binary_toolchain_test
-  DEVICE_PATH=$(find "${F4PGA_SHARE_DIR}"/arch/ -type d -name "${DEVICE}*")
-  export PINMAP_FILE=${DEVICE_PATH}/${PINMAPCSV}
-  if [ -d "${DEVICE_PATH}/cells" ]; then
-    export DEVICE_CELLS_SIM=`find ${DEVICE_PATH}/cells -name "*_sim.v"`
-    export DEVICE_CELLS_MAP=`find ${DEVICE_PATH}/cells -name "*_map.v"`
-  else
-    export DEVICE_CELLS_SIM=
-    export DEVICE_CELLS_MAP=
-  fi
-fi
+LOG=${TOP}_synth.log
+
 
 YOSYS_COMMANDS=`echo ${EXTRA_ARGS[*]} | python3 ${CONVERT_OPTS}`
 YOSYS_COMMANDS="${YOSYS_COMMANDS//$'\n'/'; '}"
 
 LOG=${TOP}_synth.log
 
-YOSYS_SCRIPT="tcl ${SYNTH_TCL_PATH}"
+set +e
 
-for f in ${VERILOG_FILES[*]}; do
-  YOSYS_SCRIPT="read_verilog ${f}; $YOSYS_SCRIPT"
-done
+CMDS="tcl ${F4PGA_EXEC_TCL_PATH}; tcl ${F4PGA_COMMON_TCL_PATH}; tcl ${SYNTH_TCL_PATH}"
 
-if [ ! -z "${YOSYS_COMMANDS}" ]; then
-  YOSYS_SCRIPT="$YOSYS_COMMANDS; $YOSYS_SCRIPT"
+if [ -z "$SURELOG_CMD" ]; then
+  yosys -p "plugin -i ql-iob; plugin -i ql-qlf; ${CMDS}" -l $LOG
+else
+  yosys -p "plugin -i ql-iob; plugin -i ql-qlf; plugin -i uhdm; ${TCL}" -l $LOG
 fi
 
-`which yosys` -p "${YOSYS_SCRIPT}" -l $LOG
-`which python3` ${SPLIT_INOUTS} -i ${OUT_JSON} -o ${SYNTH_JSON}
-`which yosys` -p "read_json $SYNTH_JSON; tcl ${CONV_TCL_PATH}"
+rm -rf $TMP_DIR
+
+RESULT=$?
+if [ $RESULT != 0 ]; then
+  exit $RESULT
+fi
+
+set -e
+
+CMDS="tcl ${F4PGA_EXEC_TCL_PATH}; tcl ${F4PGA_COMMON_TCL_PATH}; tcl ${CONV_TCL_PATH}"
+
+python3 "${UTILS_PATH}/split_inouts.py" -i "${DEP_json}" -o ${DEP_synth_json}
+yosys -p "${CMDS}"
+
+python3 ${SPLIT_INOUTS} -i ${DEP_json} -o ${DEP_synth_json}
+yosys -p "${CMDS}"
