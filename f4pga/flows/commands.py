@@ -49,6 +49,7 @@ from f4pga.flows.flow_config import (
 from f4pga.flows.flow import Flow
 from f4pga.flows.stage import Stage
 from f4pga.flows.inspector import get_module_info
+from f4pga.util import Util
 
 
 ROOT = Path(__file__).resolve().parent
@@ -299,3 +300,10 @@ def cmd_show_dependencies(args: Namespace):
         sfprint(0, prstr)
 
     set_verbosity_level(-1)
+
+
+def cmd_run_util(args: Namespace):
+    """Run utility script"""
+
+    util = Util(args.util, args.function, args.util_args)
+    util.exec()

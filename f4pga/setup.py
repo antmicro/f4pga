@@ -78,9 +78,11 @@ setuptools_setup(
     author="F4PGA Authors",
     description="F4PGA.",
     url="https://github.com/chipsalliance/f4pga",
-    packages=["f4pga", "f4pga.flows", "f4pga.flows.common_modules", "f4pga.wrappers.sh", "f4pga.wrappers.tcl"],
     package_dir={"f4pga": "."},
     package_data={
+        "f4pga": [
+            "fpga_map.json",
+        ],
         "f4pga.flows": [
             "*.yml",
         ],
