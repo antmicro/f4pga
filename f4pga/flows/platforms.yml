@@ -570,10 +570,9 @@ ql-eos-s3:
           out-verilog: '${:bitstream}.v'
           out-pcf: '${:bitstream}.pcf'
           out-qcf: '${:bitstream}.qcf'
-          $F4PGA_INSTALL_DIR: '${shareDir}/../../../../'
+          $F4PGA_INSTALL_DIR: '${shareDir}/../../../'
           $FPGA_FAM: eos-s3
-          $PATH: >-
-            ${shareDir}/../../../conda/envs/eos-s3/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+          $PATH: '${shareDir}/../../conda/envs/eos-s3/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
           $BIN_DIR_PATH: '${binDir}'
           $PYTHONPATH: "${auxDir}/utils/quicklogic/pp3"
 

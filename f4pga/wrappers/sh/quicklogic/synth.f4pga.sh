@@ -18,9 +18,6 @@
 
 set -e
 
-SPLIT_INOUTS="${F4PGA_SHARE_DIR}"/scripts/split_inouts.py
-CONVERT_OPTS="${F4PGA_SHARE_DIR}"/scripts/convert_compile_opts.py
-
 print_usage () {
     echo "Usage: symbiflow_synth  -v|--verilog <Verilog file list>"
     echo "                       [-t|--top <top module name>]"
@@ -161,7 +158,7 @@ else
   fi
 fi
 
-YOSYS_COMMANDS=`echo ${EXTRA_ARGS[*]} | python3 ${CONVERT_OPTS}`
+YOSYS_COMMANDS=`echo ${EXTRA_ARGS[*]} | f4pga utils convert_compile_opts`
 YOSYS_COMMANDS="${YOSYS_COMMANDS//$'\n'/'; '}"
 
 LOG=${TOP}_synth.log
@@ -177,5 +174,5 @@ if [ ! -z "${YOSYS_COMMANDS}" ]; then
 fi
 
 `which yosys` -p "${YOSYS_SCRIPT}" -l $LOG
-`which python3` ${SPLIT_INOUTS} -i ${OUT_JSON} -o ${SYNTH_JSON}
+f4pga utils split_inouts -i ${OUT_JSON} -o ${SYNTH_JSON}
 `which yosys` -p "read_json $SYNTH_JSON; tcl ${CONV_TCL_PATH}"

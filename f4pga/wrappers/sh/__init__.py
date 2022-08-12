@@ -158,7 +158,7 @@ if [[ '{device}' =~ ^(qlf_.*)$ ]]; then
     exit -1
   fi
 
-  '{python3}' '{scripts_dir}/qlf_k4n8_create_ioplace.py' \
+  f4pga utils create_ioplace \
     --pcf '{pcf}' \
     --blif '{eblif}' \
     --pinmap_xml '{archs_dir}'/"${{DEVICE_PATH}}_${{DEVICE_PATH}}/${{PINMAPXML}}" \
@@ -182,14 +182,14 @@ elif [[ '{device}' =~ ^(ql-.*)$ ]]; then
   DEVICE_PATH='{device}_wlcsp'
   PINMAP='{archs_dir}'/"${{DEVICE_PATH}}/${{PINMAPCSV}}"
 
-  '{python3}' '{scripts_dir}/pp3_create_ioplace.py' \
+  f4pga utils create_ioplace \
     --pcf '{pcf}' \
     --blif '{eblif}' \
     --map "$PINMAP" \
     --net '{net}' \
     > '{place_file_prefix}_io.place'
 
-  '{python3}' '{scripts_dir}/pp3_create_place_constraints.py' \
+  f4pga utils create_place_constraints \
     --blif '{eblif}' \
     --map '{archs_dir}'/"${{DEVICE_PATH}}/${{CLKMAPCSV}}" \
     -i '{place_file_prefix}_io.place' \
@@ -201,7 +201,7 @@ elif [[ '{device}' =~ ^(ql-.*)$ ]]; then
             + "\n".join(
                 [
                     f"""
-    '{python3}' '{scripts_dir}/pp3_eos_s3_iomux_config.py' \
+    f4pga utils iomux_config \
       --eblif '{eblif}' \
       --pcf '{pcf}' \
       --map "$PINMAP" \
@@ -406,20 +406,19 @@ def repack():
 DESIGN=${EBLIF/.eblif/}
 [ ! -z "${JSON}" ] && JSON_ARGS="--json-constraints ${JSON}" || JSON_ARGS=
 [ ! -z "${PCF_PATH}" ] && PCF_ARGS="--pcf-constraints ${PCF_PATH}" || PCF_ARGS=
-"""
-        + f"""
+
 PYTHONPATH=$F4PGA_SHARE_DIR/scripts:$PYTHONPATH \
-  '{python3}' "$F4PGA_SHARE_DIR"/scripts/repacker/repack.py \
-    --vpr-arch ${{ARCH_DEF}} \
-    --repacking-rules ${{ARCH_DIR}}/${{DEVICE_1}}.repacking_rules.json \
+  f4pga utils repack \
+    --vpr-arch ${ARCH_DEF} \
+    --repacking-rules ${ARCH_DIR}/${DEVICE_1}.repacking_rules.json \
     $JSON_ARGS \
     $PCF_ARGS \
-    --eblif-in ${{DESIGN}}.eblif \
-    --net-in ${{DESIGN}}.net \
-    --place-in ${{DESIGN}}.place \
-    --eblif-out ${{DESIGN}}.repacked.eblif \
-    --net-out ${{DESIGN}}.repacked.net \
-    --place-out ${{DESIGN}}.repacked.place \
+    --eblif-in ${DESIGN}.eblif \
+    --net-in ${DESIGN}.net \
+    --place-in ${DESIGN}.place \
+    --eblif-out ${DESIGN}.repacked.eblif \
+    --net-out ${DESIGN}.repacked.net \
+    --place-out ${DESIGN}.repacked.place \
     --absorb_buffer_luts on \
     > repack.log 2>&1
 """
@@ -501,7 +500,7 @@ ARCH_DIR="${F4PGA_SHARE_DIR}/arch/${DEVICE_1}_${DEVICE_1}"
 PINMAP_XML=${ARCH_DIR}/${PINMAPXML}
 """
         + f"""
-'{python3}' "$F4PGA_SHARE_DIR"/scripts/create_lib.py \
+f4pga utils create_lib \
   -n "${{DEV}}_0P72_SSM40" \
   -m fpga_top \
   -c '{part}' \
@@ -555,17 +554,16 @@ if [ -z $BIT ]; then echo "Please provide an input bistream file name"; exit 1; 
 if ! [[ "$DEVICE" =~ ^(ql-eos-s3|ql-pp3e)$ ]]; then echo "ERROR: Unsupported device '${DEVICE}' for fasm2bels"; exit -1; fi
 if [ -z "{PCF}" ]; then PCF_ARGS=""; else PCF_ARGS="--input-pcf ${PCF}"; fi
 echo "Running fasm2bels"
-"""
-        + f"""
-'{python3}' "${{F4PGA_SHARE_DIR}}"/scripts/fasm2bels.py "${{BIT}}" \
-  --phy-db "${{F4PGA_SHARE_DIR}}/arch/${{DEVICE}}_wlcsp/db_phy.pickle" \
-  --device-name "${{DEVICE/ql-/}}" \
+PYTHONPATH=$(dirname $0)/../../aux/utils/quicklogic/pp3:$PYTHONPATH \
+f4pga utils fasm2bels "${BIT}" \
+  --phy-db "${F4PGA_SHARE_DIR}/arch/${DEVICE}_wlcsp/db_phy.pickle" \
+  --device-name "${DEVICE/ql-/}" \
   --package-name "$PART" \
   --input-type bitstream \
-  --output-verilog "${{OUT_VERILOG:-$BIT.v}}" \
-  ${{PCF_ARGS}} \
-  --output-pcf "${{OUT_PCF:-$BIT.v.pcf}}" \
-  --output-qcf "${{OUT_QCF:-$BIT.v.qcf}}"
+  --output-verilog "${OUT_VERILOG:-$BIT.v}" \
+  ${PCF_ARGS} \
+  --output-pcf "${OUT_PCF:-$BIT.v.pcf}" \
+  --output-qcf "${OUT_QCF:-$BIT.v.qcf}"
 """
     )
 
