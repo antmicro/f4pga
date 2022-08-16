@@ -54,8 +54,7 @@ echo '::group::Install arch-defs'
 
 mkdir -p "$F4PGA_INSTALL_DIR_FAM"
 
-F4PGA_TIMESTAMP='20220803-160711'
-F4PGA_HASH='df6d9e5'
+F4PGA_HASH='674771c'
 
 case "$FPGA_FAM" in
   xc7)    PACKAGES='install-xc7 xc7a50t_test';;
@@ -66,8 +65,7 @@ case "$FPGA_FAM" in
 esac
 
 for PKG in $PACKAGES; do
-  wget -qO- https://storage.googleapis.com/symbiflow-arch-defs/artifacts/prod/foss-fpga-tools/symbiflow-arch-defs/continuous/install/${F4PGA_TIMESTAMP}/symbiflow-arch-defs-${PKG}-${F4PGA_HASH}.tar.xz \
-    | tar -xJC $F4PGA_INSTALL_DIR_FAM
+    tar -xvf test_pkgs/symbiflow-arch-defs-${PKG}-${F4PGA_HASH}.tar.xz -C $F4PGA_INSTALL_DIR_FAM
 done
 
 echo '::endgroup::'
