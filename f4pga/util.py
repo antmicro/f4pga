@@ -94,10 +94,10 @@ class Util:
         # Look through other directories common for the manufacturer
         manufacturer_path = (self.root_dir / "aux" / "utils" / man).rglob("*")
         manufacturer_dirs = [
-            man_dir.stem for man_dir in manufacturers_path if (man_dir.is_dir() and man_dir not in self.architectures)
+            man_dir.stem for man_dir in manufacturer_path if (man_dir.is_dir() and man_dir not in self.architectures)
         ]
         for man_dir in manufacturer_dirs:
-            util_path = "f4pga.aux.utils." + man + "." + man_dir + self.name
+            util_path = "f4pga.aux.utils." + man + "." + man_dir + "." + self.name
             manufacturer_path = self.root_dir / "aux" / "utils" / man / man_dir / script_name
             if manufacturer_path.is_file():
                 return util_path
