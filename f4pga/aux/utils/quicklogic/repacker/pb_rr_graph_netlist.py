@@ -22,9 +22,9 @@ complex block routing graph and creating a packed netlist from a graph with
 routing information.
 """
 
-from block_path import PathNode
+from f4pga.aux.utils.quicklogic.repacker.block_path import PathNode
 
-import packed_netlist
+import f4pga.aux.utils.quicklogic.repacker.packed_netlist as packed_netlist
 
 # =============================================================================
 

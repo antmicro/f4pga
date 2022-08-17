@@ -23,7 +23,7 @@ graphs.
 
 import logging
 
-from pb_rr_graph import NodeType
+from f4pga.aux.utils.quicklogic.repacker.pb_rr_graph import NodeType
 
 # =============================================================================
 

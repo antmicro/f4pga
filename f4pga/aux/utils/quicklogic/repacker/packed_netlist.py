@@ -25,7 +25,7 @@ VPR packed netlist format specification:
 import re
 import lxml.etree as ET
 
-from block_path import PathNode
+from f4pga.aux.utils.quicklogic.repacker.block_path import PathNode
 
 # =============================================================================
 

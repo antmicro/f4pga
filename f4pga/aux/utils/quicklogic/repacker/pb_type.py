@@ -23,9 +23,9 @@ import re
 from copy import deepcopy
 from enum import Enum
 
-from arch_xml_utils import is_leaf_pbtype
+from f4pga.aux.utils.quicklogic.repacker.arch_xml_utils import is_leaf_pbtype
 
-from block_path import PathNode
+from f4pga.aux.utils.quicklogic.repacker.block_path import PathNode
 
 # =============================================================================
 

@@ -41,20 +41,20 @@ from collections import namedtuple
 import json
 import lxml.etree as ET
 
-from block_path import PathNode
+from f4pga.aux.utils.quicklogic.repacker.block_path import PathNode
 
-from eblif_netlist import Eblif, Cell
-import netlist_cleaning
+from f4pga.aux.utils.quicklogic.repacker.eblif_netlist import Eblif, Cell
+import f4pga.aux.utils.quicklogic.repacker.netlist_cleaning as netlist_cleaning
 
-import packed_netlist as pn
-from packed_netlist import PackedNetlist
-from pb_rr_graph import Graph, NodeType
-from pb_rr_graph_router import Router
+import f4pga.aux.utils.quicklogic.repacker.packed_netlist as pn
+from f4pga.aux.utils.quicklogic.repacker.packed_netlist import PackedNetlist
+from f4pga.aux.utils.quicklogic.repacker.pb_rr_graph import Graph, NodeType
+from f4pga.aux.utils.quicklogic.repacker.pb_rr_graph_router import Router
 
-from pb_rr_graph_netlist import load_clb_nets_into_pb_graph
-from pb_rr_graph_netlist import build_packed_netlist_from_pb_graph
+from f4pga.aux.utils.quicklogic.repacker.pb_rr_graph_netlist import load_clb_nets_into_pb_graph
+from f4pga.aux.utils.quicklogic.repacker.pb_rr_graph_netlist import build_packed_netlist_from_pb_graph
 
-from pb_type import PbType, Model, PortType
+from f4pga.aux.utils.quicklogic.repacker.pb_type import PbType, Model, PortType
 from f4pga.aux.utils.lib.parse_pcf import parse_simple_pcf
 
 # =============================================================================

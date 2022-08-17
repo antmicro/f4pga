@@ -25,14 +25,14 @@ import colorsys
 
 from enum import Enum
 
-from block_path import PathNode
+from f4pga.aux.utils.quicklogic.repacker.block_path import PathNode
 
-from pb_type import PortType
+from f4pga.aux.utils.quicklogic.repacker.pb_type import PortType
 
-from arch_xml_utils import is_leaf_pbtype
-from arch_xml_utils import get_parent_pb
-from arch_xml_utils import yield_pb_children
-from arch_xml_utils import yield_pins
+from f4pga.aux.utils.quicklogic.repacker.arch_xml_utils import is_leaf_pbtype
+from f4pga.aux.utils.quicklogic.repacker.arch_xml_utils import get_parent_pb
+from f4pga.aux.utils.quicklogic.repacker.arch_xml_utils import yield_pb_children
+from f4pga.aux.utils.quicklogic.repacker.arch_xml_utils import yield_pins
 
 # =============================================================================
 
