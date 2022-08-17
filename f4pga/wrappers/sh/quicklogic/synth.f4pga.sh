@@ -130,7 +130,7 @@ export OUT_SYNTH_V=${TOP}_synth.v
 export OUT_EBLIF=${TOP}.eblif
 export OUT_FASM_EXTRA=${TOP}_fasm_extra.fasm
 export PYTHON3=$(which python3)
-export UTILS_PATH="${F4PGA_SHARE_DIR}"/scripts
+export UTILS_PATH="${F4PGA_SHARE_DIR}"/utils
 
 if [ -s $PCF ]; then
     export PCF_FILE=$PCF
