@@ -248,50 +248,48 @@ class Flow:
 
         if p_req_exists(paths) and not run:
             return True
-        else:
-            assert provider
 
-            any_dep_differ = False if (self.f4cache is not None) else True
-            for p_dep in provider.takes:
-                if not self._build_dep(p_dep.name):
-                    assert p_dep.spec != "req"
-                    continue
-                if self.f4cache is not None:
-                    any_dep_differ |= p_update_dep_statuses(self.dep_paths[p_dep.name], provider.name, self.f4cache)
+        assert provider
 
-            # If dependencies remained the same, consider the dep as up-to date
-            # For example, when changing a comment in Verilog source code,
-            # the initial dependency resolution will report a need for complete
-            # rebuild, however, after the synthesis stage, the generated eblif
-            # will reamin the same, thus making it unnecessary to continue the
-            # rebuild process.
-            if (not any_dep_differ) and p_req_exists(paths):
-                sfprint(
-                    2,
-                    f"Skipping rebuild of `"
-                    f"{Style.BRIGHT + dep + Style.RESET_ALL}` because all "
-                    f"of it's dependencies remained unchanged",
-                )
-                return True
+        any_dep_differ = False if (self.f4cache is not None) else True
+        for p_dep in provider.takes:
+            if not self._build_dep(p_dep.name):
+                assert p_dep.spec != "req"
+                continue
 
-            module_exec(
-                provider.module,
-                self._config_mod_runctx(
-                    provider,
-                    self.cfg.get_r_env(provider.name).values,
-                    self.dep_paths,
-                    self.cfg.get_dependency_overrides(),
-                ),
+            if self.f4cache is not None:
+                any_dep_differ |= p_update_dep_statuses(self.dep_paths[p_dep.name], provider.name, self.f4cache)
+
+        # If dependencies remained the same, consider the dep as up-to date
+        # For example, when changing a comment in Verilog source code,
+        # the initial dependency resolution will report a need for complete
+        # rebuild, however, after the synthesis stage, the generated eblif
+        # will reamin the same, thus making it unnecessary to continue the
+        # rebuild process.
+        if (not any_dep_differ) and p_req_exists(paths):
+            sfprint(
+                2,
+                f"Skipping rebuild of `"
+                f"{Style.BRIGHT + dep + Style.RESET_ALL}` because all "
+                f"of it's dependencies remained unchanged",
             )
+            return True
 
-            self.run_stages.discard(provider.name)
+        module_exec(
+            provider.module,
+            self._config_mod_runctx(
+                provider, self.cfg.get_r_env(provider.name).values, self.dep_paths, self.cfg.get_dependency_overrides()
+            ),
+        )
 
-            for product in provider.produces:
-                if (product.spec == "req") and not p_req_exists(paths):
-                    raise DependencyNotProducedException(dep, provider.name)
-                prod_paths = self.dep_paths[product.name]
-                if (prod_paths is not None) and p_req_exists(paths) and self.f4cache:
-                    self._cache_deps(prod_paths, self.f4cache)
+        self.run_stages.discard(provider.name)
+
+        for product in provider.produces:
+            if (product.spec == "req") and not p_req_exists(paths):
+                raise DependencyNotProducedException(dep, provider.name)
+            prod_paths = self.dep_paths[product.name]
+            if (prod_paths is not None) and p_req_exists(paths) and self.f4cache:
+                self._cache_deps(prod_paths, self.f4cache)
 
         return True
 
@@ -318,12 +316,10 @@ def p_req_exists(r):
     Checks whether a dependency exists on a drive.
     """
     if type(r) is str:
-        if not Path(r).exists():
-            return False
-    elif type(r) is list:
+        return Path(r).exists()
+    if type(r) is list:
         return not (False in map(p_req_exists, r))
-    else:
-        raise Exception(f"Requirements can be currently checked only for single paths, or path lists (reason: {r})")
+    raise Exception(f"Requirements can be currently checked only for single paths, or path lists (reason: {r})")
     return True
 
 
