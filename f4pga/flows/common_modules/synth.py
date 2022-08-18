@@ -83,14 +83,7 @@ class SynthModule(Module):
         )
 
         yield f"Splitting in/outs..."
-        common_sub(
-            "python3",
-            str(Path(tcl_env["UTILS_PATH"]) / "split_inouts.py"),
-            "-i",
-            ctx.outputs.json,
-            "-o",
-            ctx.outputs.synth_json,
-        )
+        common_sub("f4pga", "utils", "split_inouts", "-i", ctx.outputs.json, "-o", ctx.outputs.synth_json)
 
         if not Path(ctx.produces.fasm_extra).is_file():
             with Path(ctx.produces.fasm_extra).open("w") as wfptr:
