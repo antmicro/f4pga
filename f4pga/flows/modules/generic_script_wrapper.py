@@ -63,23 +63,6 @@ from f4pga.flows.common import decompose_depname, deep, get_verbosity_level, sub
 from f4pga.flows.module import Module, ModuleContext
 
 
-def _get_param(params, name: str):
-    param = params.get(name)
-    if not param:
-        raise Exception(f"generic module wrapper parameters " f"missing `{name}` field")
-    return param
-
-
-def _parse_param_def(param_def: str):
-    if param_def[0] == "#":
-        return "positional", int(param_def[1:])
-    elif param_def[0] == "$":
-        return "environmental", param_def[1:]
-    elif param_def[0] == "-":
-        return "char", param_def[1:]
-    return "named", param_def
-
-
 class InputReferences:
     dependencies: "set[str]"
     values: "set[str]"
@@ -91,36 +74,6 @@ class InputReferences:
     def __init__(self):
         self.dependencies = set()
         self.values = set()
-
-
-def _get_input_references(input: str) -> InputReferences:
-    refs = InputReferences()
-    if type(input) is not str:
-        return refs
-    for match in re_finditer("\$\{([^${}]*)\}", input):
-        match_str = match.group(1)
-        if match_str[0] != ":":
-            refs.values.add(match_str)
-            continue
-        if len(match_str) < 2:
-            raise Exception("Dependency name must be at least 1 character long")
-        refs.dependencies.add(re_match("([^\\[\\]]*)", match_str[1:]).group(1))
-    return refs
-
-
-def _make_noop1():
-    def noop(_):
-        return
-
-    return noop
-
-
-def _tailcall1(self, fun):
-    def newself(arg, self=self, fun=fun):
-        fun(arg)
-        self(arg)
-
-    return newself
 
 
 class GenericScriptWrapperModule(Module):
@@ -228,11 +181,15 @@ class GenericScriptWrapperModule(Module):
         env_vars = {}
         refs = InputReferences()
 
-        get_args = _make_noop1()
-        get_env = _make_noop1()
+        get_args = p_make_noop1()
+        get_env = p_make_noop1()
 
         for arg_code, input in input_defs.items():
-            param_kind, param = _parse_param_def(arg_code)
+            if arg_code[0] == "#":
+                param_kind, param = "positional", int(arg_code[1:])
+            elif arg_code[0] == "$":
+                param_kind, param = "environmental", arg_code[1:]
+            param_kind, param = "named", arg_code
 
             push = None
             push_env = None
@@ -271,7 +228,17 @@ class GenericScriptWrapperModule(Module):
 
                 push = push_positional
 
-            input_refs = _get_input_references(input)
+            input_refs = InputReferences()
+            if type(input) is str:
+                for match in re_finditer("\$\{([^${}]*)\}", input):
+                    match_str = match.group(1)
+                    if match_str[0] != ":":
+                        input_refs.values.add(match_str)
+                        continue
+                    if len(match_str) < 2:
+                        raise Exception("Dependency name must be at least 1 character long")
+                    input_refs.dependencies.add(re_match("([^\\[\\]]*)", match_str[1:]).group(1))
+
             refs.merge(input_refs)
 
             if push is not None:
@@ -281,7 +248,7 @@ class GenericScriptWrapperModule(Module):
                     if val != "":
                         push(val)
 
-                get_args = _tailcall1(get_args, push_q)
+                get_args = p_tailcall1(get_args, push_q)
             else:
 
                 def push_q(ctx: ModuleContext, push_env=push_env, input=input):
@@ -289,7 +256,7 @@ class GenericScriptWrapperModule(Module):
                     if val != "":
                         push_env(val)
 
-                get_env = _tailcall1(get_env, push_q)
+                get_env = p_tailcall1(get_env, push_q)
 
         def get_all_args(ctx: ModuleContext):
             nonlocal get_args, positional_args, named_args
@@ -328,8 +295,37 @@ class GenericScriptWrapperModule(Module):
         self.values = []
         self.prod_meta = {}
 
-        self._init_outputs(_get_param(params, "outputs"))
-        self._init_inputs(_get_param(params, "inputs"))
+        self._init_outputs(p_get_param(params, "outputs"))
+        self._init_inputs(p_get_param(params, "inputs"))
 
 
 ModuleClass = GenericScriptWrapperModule
+
+
+def p_get_param(params, name: str):
+    param = params.get(name)
+    if not param:
+        raise Exception(f"generic module wrapper parameters " f"missing `{name}` field")
+    return param
+
+
+def p_make_noop1():
+    def noop(_):
+        return
+
+    return noop
+
+
+def p_tailcall1(self, fun):
+    def newself(arg, self=self, fun=fun):
+        fun(arg)
+        self(arg)
+
+    return newself
+
+
+def _get_param(params, name: str):
+    param = params.get(name)
+    if not param:
+        raise Exception(f"generic module wrapper parameters " f"missing `{name}` field")
+    return param
