@@ -44,8 +44,7 @@ class Net:
 
     def __str__(self):
         return "{}, {} sources, max_fanout={}, {}".format(
-            self.name, len(self.sources), len(self.sinks),
-            "routed" if self.is_routed else "unrouted"
+            self.name, len(self.sources), len(self.sinks), "routed" if self.is_routed else "unrouted"
         )
 
 
@@ -208,19 +207,12 @@ class Router:
                 # DEBUG
                 if debug:
                     with open("unrouted.dot", "w") as fp:
-                        fp.write(
-                            self.graph.dump_dot(
-                                color_by="net",
-                                highlight_nodes=net.sources | set([sink])
-                            )
-                        )
+                        fp.write(self.graph.dump_dot(color_by="net", highlight_nodes=net.sources | set([sink])))
 
                 # Raise an exception
                 raise RuntimeError(
                     "Unroutable net '{}' from {} to {}".format(
-                        net.name,
-                        [self.graph.nodes[node_id] for node_id in net.sources],
-                        self.graph.nodes[sink]
+                        net.name, [self.graph.nodes[node_id] for node_id in net.sources], self.graph.nodes[sink]
                     )
                 )
 

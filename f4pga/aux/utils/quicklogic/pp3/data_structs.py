@@ -117,21 +117,11 @@ class TileType(object):
                 for pin in cells_library[cell_type].pins:
                     name = "{}{}_{}".format(cell_type, i, pin.name)
 
-                    self.pins.append(
-                        Pin(
-                            name=name,
-                            direction=pin.direction,
-                            attrib=pin.attrib
-                        )
-                    )
+                    self.pins.append(Pin(name=name, direction=pin.direction, attrib=pin.attrib))
 
         # Add the fake constant connection pin if marked
         if self.fake_const_pin:
-            self.pins.append(
-                Pin(
-                    name="FAKE_CONST", direction=PinDirection.INPUT, attrib={}
-                )
-            )
+            self.pins.append(Pin(name="FAKE_CONST", direction=PinDirection.INPUT, attrib={}))
 
 
 """
@@ -150,6 +140,7 @@ class SwitchboxPinType(Enum):
     """
     Switchbox pin types.
     """
+
     UNSPEC = 0  # Unknown.
     LOCAL = 1  # Connects to the tile at the same location as the switchbox.
     HOP = 2  # Generic hop, connects to another switchbox.
@@ -167,9 +158,7 @@ mux_id        - Mux id within the switch
 pin_id        - Pin id of the mux
 pin_direction - Logical direction of the pin
 """
-SwitchboxPinLoc = namedtuple(
-    "SwitchboxPinLoc", "stage_id switch_id mux_id pin_id pin_direction"
-)
+SwitchboxPinLoc = namedtuple("SwitchboxPinLoc", "stage_id switch_id mux_id pin_id pin_direction")
 """
 A top-level switchbox pin.
 
@@ -331,6 +320,7 @@ class ConnectionType(Enum):
     """
     Connection endpoint type
     """
+
     UNSPEC = 0  # Unspecified
     SWITCHBOX = 1  # Connection to a pin of a switchbox
     TILE = 2  # Connection to a pin of a tile

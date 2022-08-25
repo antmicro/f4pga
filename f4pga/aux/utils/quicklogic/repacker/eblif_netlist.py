@@ -446,12 +446,7 @@ class Eblif:
 
                 # Write the cell header. Sort inputs by their indices
                 keys = sorted(nets.keys())
-                lines.append(
-                    ".names {} {}".format(
-                        " ".join([nets[k] for k in keys]),
-                        str(cell.ports["lut_out"])
-                    )
-                )
+                lines.append(".names {} {}".format(" ".join([nets[k] for k in keys]), str(cell.ports["lut_out"])))
 
                 # Write the truth table
                 fmt = "{:0" + str(len(nets)) + "b}"
@@ -465,17 +460,14 @@ class Eblif:
             elif cell.type in ["$fe", "$re", "$ah", "$al", "$as"]:
 
                 line = ".latch {} {} {} {} {}".format(
-                    str(cell.ports["D"]), str(cell.ports["Q"]), cell.type[1:],
-                    str(cell.ports["clock"]), str(cell.init)
+                    str(cell.ports["D"]), str(cell.ports["Q"]), cell.type[1:], str(cell.ports["clock"]), str(cell.init)
                 )
                 lines.append(line)
 
             # A generic latch controlled by a single global clock
             elif cell.type == "$latch":
 
-                line = ".latch {} {} {}".format(
-                    str(cell.ports["D"]), str(cell.ports["Q"]), str(cell.init)
-                )
+                line = ".latch {} {} {}".format(str(cell.ports["D"]), str(cell.ports["Q"]), str(cell.init))
                 lines.append(line)
 
             # A generic subcircuit

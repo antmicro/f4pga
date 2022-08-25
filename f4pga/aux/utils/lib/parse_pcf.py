@@ -27,12 +27,12 @@ Supported PCF commands:
 from collections import namedtuple
 import re
 
-PcfIoConstraint = namedtuple('PcfIoConstraint', 'net pad line_str line_num')
-PcfClkConstraint = namedtuple('PcfClkConstraint', 'pin net')
+PcfIoConstraint = namedtuple("PcfIoConstraint", "net pad line_str line_num")
+PcfClkConstraint = namedtuple("PcfClkConstraint", "pin net")
 
 
 def parse_simple_pcf(f):
-    """ Parse a simple PCF file object and yield PcfIoConstraint objects. """
+    """Parse a simple PCF file object and yield PcfIoConstraint objects."""
     for line_number, line in enumerate(f):
         line_number += 1
 
@@ -43,10 +43,10 @@ def parse_simple_pcf(f):
             continue
 
         # Ignore arguments.
-        args = [arg for arg in args if arg[0] != '-']
+        args = [arg for arg in args if arg[0] != "-"]
         assert len(args) == 3, args
 
-        if args[0] == 'set_io':
+        if args[0] == "set_io":
 
             yield PcfIoConstraint(
                 net=args[1],
@@ -55,7 +55,7 @@ def parse_simple_pcf(f):
                 line_num=line_number,
             )
 
-        if args[0] == 'set_clk':
+        if args[0] == "set_clk":
 
             yield PcfClkConstraint(
                 pin=args[1],

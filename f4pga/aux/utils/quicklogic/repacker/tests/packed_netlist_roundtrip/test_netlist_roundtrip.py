@@ -47,8 +47,7 @@ def test_netlist_roundtrip():
         sorted_golden_file = os.path.join(tempdir, "netlist.golden.sorted.net")
         with open(sorted_golden_file, "w") as fp:
             et = xform(xml_tree)
-            st = '<?xml version="1.0">\n' \
-                 + ET.tostring(et, pretty_print=True).decode("utf-8")
+            st = '<?xml version="1.0">\n' + ET.tostring(et, pretty_print=True).decode("utf-8")
             fp.write(st)
 
         # Build packed netlist
@@ -61,8 +60,7 @@ def test_netlist_roundtrip():
         sorted_output_file = os.path.join(tempdir, "netlist.output.sorted.net")
         with open(sorted_output_file, "w") as fp:
             et = xform(xml_tree)
-            st = '<?xml version="1.0">\n' \
-                 + ET.tostring(et, pretty_print=True).decode("utf-8")
+            st = '<?xml version="1.0">\n' + ET.tostring(et, pretty_print=True).decode("utf-8")
             fp.write(st)
 
         # Compare the two files

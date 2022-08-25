@@ -24,9 +24,17 @@ switchbox - tile connections.
 import re
 
 import sys
+
 print("PYTHONPATH: {}".format(sys.path))
-from f4pga.aux.utils.quicklogic.pp3.data_structs import SwitchboxPinType, Loc, OPPOSITE_DIRECTION, \
-    Connection, ConnectionLoc, ConnectionType, PinDirection
+from f4pga.aux.utils.quicklogic.pp3.data_structs import (
+    SwitchboxPinType,
+    Loc,
+    OPPOSITE_DIRECTION,
+    Connection,
+    ConnectionLoc,
+    ConnectionType,
+    PinDirection,
+)
 from f4pga.aux.utils.quicklogic.pp3.utils import find_cell_in_tile
 
 # =============================================================================
@@ -165,9 +173,7 @@ def is_regular_hop_wire(name):
 # =============================================================================
 
 
-def build_tile_connections(
-        tile_types, tile_grid, switchbox_types, switchbox_grid
-):
+def build_tile_connections(tile_types, tile_grid, switchbox_types, switchbox_grid):
     """
     Build local and foreign connections between all switchboxes and tiles.
     """
@@ -178,10 +184,7 @@ def build_tile_connections(
         switchbox = switchbox_types[switchbox_type]
 
         # Get pins
-        sbox_pins = [
-            pin for pin in switchbox.pins
-            if pin.type in [SwitchboxPinType.LOCAL, SwitchboxPinType.FOREIGN]
-        ]
+        sbox_pins = [pin for pin in switchbox.pins if pin.type in [SwitchboxPinType.LOCAL, SwitchboxPinType.FOREIGN]]
 
         for sbox_pin in sbox_pins:
             tile = None
@@ -202,11 +205,7 @@ def build_tile_connections(
 
             # Get the tile
             if tile_loc not in tile_grid:
-                print(
-                    "WARNING: No tile at loc '{}' for pin '{}'".format(
-                        tile_loc, sbox_pin.name
-                    )
-                )
+                print("WARNING: No tile at loc '{}' for pin '{}'".format(tile_loc, sbox_pin.name))
                 continue
 
             tile = tile_types[tile_grid[tile_loc].type]
@@ -233,8 +232,9 @@ def build_tile_connections(
             # Pin not found
             if tile_pin is None:
                 print(
-                    "WARNING: No pin in tile at '{}' found for switchbox pin '{}' of '{}' at '{}'"
-                    .format(tile_loc, sbox_pin.name, switchbox.type, loc)
+                    "WARNING: No pin in tile at '{}' found for switchbox pin '{}' of '{}' at '{}'".format(
+                        tile_loc, sbox_pin.name, switchbox.type, loc
+                    )
                 )
                 continue
 
@@ -281,10 +281,7 @@ def build_hop_connections(switchbox_types, switchbox_grid):
 
         # Process HOP inputs. No need for looping over outputs as each output
         # should go into a HOP input.
-        dst_pins = [
-            pin for pin in dst_switchbox.inputs.values()
-            if pin.type == SwitchboxPinType.HOP
-        ]
+        dst_pins = [pin for pin in dst_switchbox.inputs.values() if pin.type == SwitchboxPinType.HOP]
         for dst_pin in dst_pins:
 
             # Parse the name, determine hop offset. Skip non-hop wires.
@@ -302,8 +299,7 @@ def build_hop_connections(switchbox_types, switchbox_grid):
             # Get the switchbox at the source location
             if src_loc not in switchbox_grid:
                 print(
-                    "WARNING: No switchbox at '{}' for input '{}' of switchbox '{}' at '{}'"
-                    .format(
+                    "WARNING: No switchbox at '{}' for input '{}' of switchbox '{}' at '{}'".format(
                         src_loc, dst_pin.name, dst_switchbox_type, dst_loc
                     )
                 )
@@ -313,17 +309,13 @@ def build_hop_connections(switchbox_types, switchbox_grid):
             src_switchbox = switchbox_types[src_switchbox_type]
 
             # Check if there is a matching input pin in that switchbox
-            src_pins = [
-                pin for pin in src_switchbox.outputs.values()
-                if pin.name == hop_name
-            ]
+            src_pins = [pin for pin in src_switchbox.outputs.values() if pin.name == hop_name]
 
             if len(src_pins) != 1:
                 print(
                     "WARNING: No output pin '{}' in switchbox '{}'"
                     " at '{}' for input '{}' of switchbox '{}' at '{}'".format(
-                        hop_name, src_switchbox_type, src_loc, dst_pin.name,
-                        dst_switchbox_type, dst_loc
+                        hop_name, src_switchbox_type, src_loc, dst_pin.name, dst_switchbox_type, dst_loc
                     )
                 )
                 continue
@@ -342,7 +334,7 @@ def build_hop_connections(switchbox_types, switchbox_grid):
                     pin=dst_pin.name,
                     type=ConnectionType.SWITCHBOX,
                 ),
-                is_direct=False
+                is_direct=False,
             )
 
             connections.append(connection)
@@ -371,9 +363,7 @@ def find_clock_cell(alias, tile_grid):
     return None, None, None
 
 
-def build_gmux_qmux_connections(
-        tile_types, tile_grid, switchbox_types, switchbox_grid, clock_cells
-):
+def build_gmux_qmux_connections(tile_types, tile_grid, switchbox_types, switchbox_grid, clock_cells):
 
     # Define names of all global clock wires.
     # Each global clock mux as an implicitly defined output equal to its name.
@@ -401,9 +391,7 @@ def build_gmux_qmux_connections(
                 dst_cell = find_cell_in_tile(clock_cell.name, dst_tile)
                 dst_type = ConnectionType.TILE
 
-                dst_pin_name = "{}{}_{}".format(
-                    dst_cell.type, dst_cell.index, pin_name
-                )
+                dst_pin_name = "{}{}_{}".format(dst_cell.type, dst_cell.index, pin_name)
 
             # This pin connects to a global clock wire
             if pin_conn in clock_wires:
@@ -415,22 +403,16 @@ def build_gmux_qmux_connections(
                 # try finding it by its name / alias
                 if other_cell is None:
 
-                    src_loc, src_tile, src_cell = \
-                        find_clock_cell(pin_conn, tile_grid)
+                    src_loc, src_tile, src_cell = find_clock_cell(pin_conn, tile_grid)
 
                     # Didint find the cell
                     if src_cell is None:
-                        print(
-                            "WARNING: No source cell for global clock wire '{}'"
-                            .format(pin_conn)
-                        )
+                        print("WARNING: No source cell for global clock wire '{}'".format(pin_conn))
                         continue
 
                     # Connect to the cell
                     src_type = ConnectionType.TILE
-                    src_pin_name = "{}{}_{}".format(
-                        src_cell.type, src_cell.index, "IC"
-                    )
+                    src_pin_name = "{}{}_{}".format(src_cell.type, src_cell.index, "IC")
 
                     is_direct = True
 
@@ -449,24 +431,16 @@ def build_gmux_qmux_connections(
                         src_cell = find_cell_in_tile(other_cell.name, src_tile)
                         src_type = ConnectionType.TILE
 
-                        src_pin_name = "{}{}_{}".format(
-                            src_cell.type, src_cell.index, "IZ"
-                        )
+                        src_pin_name = "{}{}_{}".format(src_cell.type, src_cell.index, "IZ")
 
                     is_direct = False
 
                 # Make the connection
                 connections.append(
                     Connection(
-                        src=ConnectionLoc(
-                            loc=src_loc, pin=src_pin_name, type=src_type
-                        ),
-                        dst=ConnectionLoc(
-                            loc=clock_cell.loc,
-                            pin=dst_pin_name,
-                            type=dst_type
-                        ),
-                        is_direct=is_direct
+                        src=ConnectionLoc(loc=src_loc, pin=src_pin_name, type=src_type),
+                        dst=ConnectionLoc(loc=clock_cell.loc, pin=dst_pin_name, type=dst_type),
+                        is_direct=is_direct,
                     )
                 )
 
@@ -476,9 +450,7 @@ def build_gmux_qmux_connections(
 # =============================================================================
 
 
-def build_connections(
-        tile_types, tile_grid, switchbox_types, switchbox_grid, clock_cells
-):
+def build_connections(tile_types, tile_grid, switchbox_types, switchbox_grid, clock_cells):
     """
     Builds a connection map between switchboxes in the grid and between
     switchboxes and underlying tiles.
@@ -486,17 +458,13 @@ def build_connections(
     connections = []
 
     # Local and foreign tile connections
-    connections += build_tile_connections(
-        tile_types, tile_grid, switchbox_types, switchbox_grid
-    )
+    connections += build_tile_connections(tile_types, tile_grid, switchbox_types, switchbox_grid)
 
     # HOP connections
     connections += build_hop_connections(switchbox_types, switchbox_grid)
 
     # GMUX and QMUX connections
-    connections += build_gmux_qmux_connections(
-        tile_types, tile_grid, switchbox_types, switchbox_grid, clock_cells
-    )
+    connections += build_gmux_qmux_connections(tile_types, tile_grid, switchbox_types, switchbox_grid, clock_cells)
 
     return connections
 

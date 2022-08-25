@@ -34,6 +34,7 @@ class PortType(Enum):
     """
     Type and direction of a pb_type port.
     """
+
     UNSPEC = 0
     INPUT = 1
     OUTPUT = 2
@@ -82,7 +83,7 @@ class Port:
             type=PortType.from_string(elem.tag),
             name=elem.attrib["name"],
             width=int(elem.get("num_pins", "1")),
-            cls=elem.get("port_class", None)
+            cls=elem.get("port_class", None),
         )
 
         return port
@@ -97,9 +98,7 @@ class Port:
         if range_spec is not None:
 
             # TODO: Compile the regex upfront
-            match = re.fullmatch(
-                r"((?P<i1>[0-9]+):)?(?P<i0>[0-9]+)", range_spec
-            )
+            match = re.fullmatch(r"((?P<i1>[0-9]+):)?(?P<i0>[0-9]+)", range_spec)
             assert match is not None, range_spec
 
             i0 = int(match.group("i0"))
@@ -208,9 +207,7 @@ class Model:
     def __str__(self):
         string = self.name
         for port in self.ports.values():
-            string += " {}:{}[{}:0]".format(
-                port.type.name[0].upper(), port.name, port.width - 1
-            )
+            string += " {}:{}[{}:0]".format(port.type.name[0].upper(), port.name, port.width - 1)
         return string
 
     def __repr__(self):
@@ -319,9 +316,7 @@ class PbType:
         """
 
         # TODO: Compile the regex upfront
-        match = re.fullmatch(
-            r"(?P<port>[^\s\[\]\.]+)(\[(?P<bits>[^\s\[\]]+)\])?", port_spec
-        )
+        match = re.fullmatch(r"(?P<port>[^\s\[\]\.]+)(\[(?P<bits>[^\s\[\]]+)\])?", port_spec)
         assert match is not None, port_spec
 
         port = match.group("port")

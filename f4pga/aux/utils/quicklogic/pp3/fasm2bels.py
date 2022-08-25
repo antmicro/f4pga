@@ -32,24 +32,21 @@ from f4pga.aux.utils.quicklogic.pp3.verilogmodule import VModule
 from quicklogic_fasm.qlfasm import load_quicklogic_database, get_db_dir
 from quicklogic_fasm.qlfasm import QL732BAssembler
 
-Feature = namedtuple('Feature', 'loc typ signature value')
-RouteEntry = namedtuple('RouteEntry', 'typ stage_id switch_id mux_id sel_id')
-MultiLocCellMapping = namedtuple(
-    'MultiLocCellMapping', 'typ fromlocset toloc pinnames'
-)
+Feature = namedtuple("Feature", "loc typ signature value")
+RouteEntry = namedtuple("RouteEntry", "typ stage_id switch_id mux_id sel_id")
+MultiLocCellMapping = namedtuple("MultiLocCellMapping", "typ fromlocset toloc pinnames")
 
 
 class Fasm2Bels(object):
-    '''Class for parsing FASM file and producing BEL representation.
+    """Class for parsing FASM file and producing BEL representation.
 
     It takes FASM lines and VPR database and converts the data to Basic
     Elements and connections between them. It allows converting this data to
     Verilog.
-    '''
+    """
 
     class Fasm2BelsException(Exception):
-        '''Exception for Fasm2Bels errors and unsupported features.
-        '''
+        """Exception for Fasm2Bels errors and unsupported features."""
 
         def __init__(self, message):
             self.message = message
@@ -58,7 +55,7 @@ class Fasm2Bels(object):
             return self.message
 
     def __init__(self, phy_db, device_name, package_name):
-        '''Prepares required structures for converting FASM to BELs.
+        """Prepares required structures for converting FASM to BELs.
 
         Parameters
         ----------
@@ -66,7 +63,7 @@ class Fasm2Bels(object):
             A dictionary containing cell_library, loc_map, vpr_tile_types,
             vpr_tile_grid, vpr_switchbox_types, vpr_switchbox_grid,
             connections, vpr_package_pinmaps
-        '''
+        """
 
         # load phy_db data
         self.quadrants = phy_db["phy_quadrants"]
@@ -84,14 +81,12 @@ class Fasm2Bels(object):
 
         if self.package_name not in db["package_pinmaps"]:
             raise self.Fasm2BelsException(
-                "ERROR: '{}' is not a vaild package for device '{}'. Valid ones are: {}"
-                .format(
-                    self.package_name, self.device_name,
-                    ", ".join(db["package_pinmaps"].keys())
+                "ERROR: '{}' is not a vaild package for device '{}'. Valid ones are: {}".format(
+                    self.package_name, self.device_name, ", ".join(db["package_pinmaps"].keys())
                 )
             )
 
-        for name, package in db['package_pinmaps'][self.package_name].items():
+        for name, package in db["package_pinmaps"][self.package_name].items():
             self.io_to_fbio[package[0].loc] = name
 
         # Add ASSP to all locations it covers
@@ -125,18 +120,17 @@ class Fasm2Bels(object):
 
         # this map represents the mapping from input name to its inverter name
         self.inversionpins = {
-            'LOGIC':
-                {
-                    'TA1': 'TAS1',
-                    'TA2': 'TAS2',
-                    'TB1': 'TBS1',
-                    'TB2': 'TBS2',
-                    'BA1': 'BAS1',
-                    'BA2': 'BAS2',
-                    'BB1': 'BBS1',
-                    'BB2': 'BBS2',
-                    'QCK': 'QCKS'
-                }
+            "LOGIC": {
+                "TA1": "TAS1",
+                "TA2": "TAS2",
+                "TB1": "TBS1",
+                "TB2": "TBS2",
+                "BA1": "BAS1",
+                "BA2": "BAS2",
+                "BB1": "BBS1",
+                "BB2": "BBS2",
+                "QCK": "QCKS",
+            }
         }
 
         # prepare helper structure for connections
@@ -147,17 +141,17 @@ class Fasm2Bels(object):
 
         # a mapping from the type of cell FASM line refers to to its parser
         self.featureparsers = {
-            'LOGIC': self.parse_logic_line,
-            'QMUX': self.parse_logic_line,
-            'GMUX': self.parse_logic_line,
-            'INTERFACE': self.parse_interface_line,
-            'ROUTING': self.parse_routing_line,
-            'CAND0': self.parse_colclk_line,
-            'CAND1': self.parse_colclk_line,
-            'CAND2': self.parse_colclk_line,
-            'CAND3': self.parse_colclk_line,
-            'CAND4': self.parse_colclk_line,
-            'RAM': self.parse_ram_line,
+            "LOGIC": self.parse_logic_line,
+            "QMUX": self.parse_logic_line,
+            "GMUX": self.parse_logic_line,
+            "INTERFACE": self.parse_interface_line,
+            "ROUTING": self.parse_routing_line,
+            "CAND0": self.parse_colclk_line,
+            "CAND1": self.parse_colclk_line,
+            "CAND2": self.parse_colclk_line,
+            "CAND3": self.parse_colclk_line,
+            "CAND4": self.parse_colclk_line,
+            "RAM": self.parse_ram_line,
         }
 
         # a mapping from cell type to a set of possible pin names
@@ -169,21 +163,14 @@ class Fasm2Bels(object):
 
         # a mapping from cell types that occupy multiple locations
         # to a single location
-        self.multiloccells = {
-            'ASSP':
-                MultiLocCellMapping(
-                    'ASSP', assplocs, Loc(1, 1, 0), self.pinnames['ASSP']
-                )
-        }
+        self.multiloccells = {"ASSP": MultiLocCellMapping("ASSP", assplocs, Loc(1, 1, 0), self.pinnames["ASSP"])}
         for ram in ramlocs:
             self.multiloccells[ram] = MultiLocCellMapping(
-                ram, ramlocs[ram],
-                list(ramlocs[ram])[0], self.pinnames['RAM']
+                ram, ramlocs[ram], list(ramlocs[ram])[0], self.pinnames["RAM"]
             )
         for mult in multlocs:
             self.multiloccells[mult] = MultiLocCellMapping(
-                mult, multlocs[mult],
-                list(multlocs[mult])[1], self.pinnames['MULT']
+                mult, multlocs[mult], list(multlocs[mult])[1], self.pinnames["MULT"]
             )
 
         # helper routing data
@@ -207,99 +194,88 @@ class Fasm2Bels(object):
         self.org_loc_map = {}
 
     def parse_logic_line(self, feature: Feature):
-        '''Parses a setting for a BEL.
+        """Parses a setting for a BEL.
 
         Parameters
         ----------
         feature: Feature
             FASM line for BEL
-        '''
-        belname, setting = feature.signature.split('.', 1)
+        """
+        belname, setting = feature.signature.split(".", 1)
         if feature.value == 1:
             # FIXME handle ZINV pins
-            if 'ZINV.' in setting:
-                setting = setting.replace('ZINV.', '')
-            elif 'INV.' in setting:
-                setting = setting.replace('INV.', '')
+            if "ZINV." in setting:
+                setting = setting.replace("ZINV.", "")
+            elif "INV." in setting:
+                setting = setting.replace("INV.", "")
             self.belinversions[feature.loc][belname].append(setting)
 
     def parse_interface_line(self, feature: Feature):
-        '''Parses a setting for IO.
+        """Parses a setting for IO.
 
         Parameters
         ----------
         feature: Feature
             FASM line for BEL
-        '''
-        belname, setting = feature.signature.split('.', 1)
+        """
+        belname, setting = feature.signature.split(".", 1)
         if feature.value == 1:
-            setting = setting.replace('ZINV.', '')
-            setting = setting.replace('INV.', '')
+            setting = setting.replace("ZINV.", "")
+            setting = setting.replace("INV.", "")
             self.interfaces[feature.loc][belname].append(setting)
 
     def parse_routing_line(self, feature: Feature):
-        '''Parses a routing setting.
+        """Parses a routing setting.
 
         Parameters
         ----------
         feature: Feature
             FASM line for BEL
-        '''
-        match = re.match(
-            r'^I_highway\.IM(?P<switch_id>[0-9]+)\.I_pg(?P<sel_id>[0-9]+)$',
-            feature.signature
-        )
+        """
+        match = re.match(r"^I_highway\.IM(?P<switch_id>[0-9]+)\.I_pg(?P<sel_id>[0-9]+)$", feature.signature)
         if match:
-            typ = 'HIGHWAY'
+            typ = "HIGHWAY"
             stage_id = 3  # FIXME: Get HIGHWAY stage id from the switchbox def
-            switch_id = int(match.group('switch_id'))
+            switch_id = int(match.group("switch_id"))
             mux_id = 0
-            sel_id = int(match.group('sel_id'))
+            sel_id = int(match.group("sel_id"))
         match = re.match(
-            r'^I_street\.Isb(?P<stage_id>[0-9])(?P<switch_id>[0-9])\.I_M(?P<mux_id>[0-9]+)\.I_pg(?P<sel_id>[0-9]+)$',  # noqa: E501
-            feature.signature
+            r"^I_street\.Isb(?P<stage_id>[0-9])(?P<switch_id>[0-9])\.I_M(?P<mux_id>[0-9]+)\.I_pg(?P<sel_id>[0-9]+)$",  # noqa: E501
+            feature.signature,
         )
         if match:
-            typ = 'STREET'
-            stage_id = int(match.group('stage_id')) - 1
-            switch_id = int(match.group('switch_id')) - 1
-            mux_id = int(match.group('mux_id'))
-            sel_id = int(match.group('sel_id'))
+            typ = "STREET"
+            stage_id = int(match.group("stage_id")) - 1
+            switch_id = int(match.group("switch_id")) - 1
+            mux_id = int(match.group("mux_id"))
+            sel_id = int(match.group("sel_id"))
         self.routingdata[feature.loc].append(
-            RouteEntry(
-                typ=typ,
-                stage_id=stage_id,
-                switch_id=switch_id,
-                mux_id=mux_id,
-                sel_id=sel_id
-            )
+            RouteEntry(typ=typ, stage_id=stage_id, switch_id=switch_id, mux_id=mux_id, sel_id=sel_id)
         )
 
     def parse_colclk_line(self, feature: Feature):
         self.colclk_data[feature.loc][feature.typ].append(feature)
 
     def parse_ram_line(self, feature: Feature):
-        '''Parses a RAM line.
+        """Parses a RAM line.
 
         Parameters
         ----------
         feature: Feature
             FASM line for BEL
-        '''
+        """
         raise NotImplementedError("Parsing RAM FASM lines is not supported")
 
     def parse_fasm_lines(self, fasmlines):
-        '''Parses FASM lines.
+        """Parses FASM lines.
 
         Parameters
         ----------
         fasmlines: list
             A list of FasmLine objects
-        '''
+        """
 
-        loctyp = re.compile(
-            r'^X(?P<x>[0-9]+)Y(?P<y>[0-9]+)\.(?P<type>[A-Z]+[0-4]?)\.(?P<signature>.*)$'
-        )  # noqa: E501
+        loctyp = re.compile(r"^X(?P<x>[0-9]+)Y(?P<y>[0-9]+)\.(?P<type>[A-Z]+[0-4]?)\.(?P<signature>.*)$")  # noqa: E501
 
         for line in fasmlines:
             if not line.set_feature:
@@ -307,20 +283,15 @@ class Fasm2Bels(object):
             match = loctyp.match(line.set_feature.feature)
             if not match:
                 raise self.Fasm2BelsException(
-                    f'FASM features have unsupported format:  {line.set_feature}'
+                    f"FASM features have unsupported format:  {line.set_feature}"
                 )  # noqa: E501
-            loc = Loc(x=int(match.group('x')), y=int(match.group('y')), z=0)
-            typ = match.group('type')
-            feature = Feature(
-                loc=loc,
-                typ=typ,
-                signature=match.group('signature'),
-                value=line.set_feature.value
-            )
+            loc = Loc(x=int(match.group("x")), y=int(match.group("y")), z=0)
+            typ = match.group("type")
+            feature = Feature(loc=loc, typ=typ, signature=match.group("signature"), value=line.set_feature.value)
             self.featureparsers[typ](feature)
 
     def decode_switchbox(self, switchbox, features):
-        '''Decodes all switchboxes to extract full connections' info.
+        """Decodes all switchboxes to extract full connections' info.
 
         For every output, this method determines its input in the routing
         switchboxes. In this representation, an input and output can be either
@@ -334,7 +305,7 @@ class Fasm2Bels(object):
         Returns
         -------
         dict: a mapping from output pin to input pin for a given switchbox
-        '''
+        """
         # Group switchbox connections by destinationa
         conn_by_dst = defaultdict(set)
         for c in switchbox.connections:
@@ -350,10 +321,8 @@ class Fasm2Bels(object):
                     mux_sel[stage_id][switch_id][mux_id] = None
 
         for feature in features:
-            assert mux_sel[feature.stage_id][feature.switch_id][
-                feature.mux_id] is None, feature  # noqa: E501
-            mux_sel[feature.stage_id][feature.switch_id][
-                feature.mux_id] = feature.sel_id  # noqa: E501
+            assert mux_sel[feature.stage_id][feature.switch_id][feature.mux_id] is None, feature  # noqa: E501
+            mux_sel[feature.stage_id][feature.switch_id][feature.mux_id] = feature.sel_id  # noqa: E501
 
         def expand_mux(out_loc):
             """
@@ -388,7 +357,7 @@ class Fasm2Bels(object):
                 switch_id=out_loc.switch_id,
                 mux_id=out_loc.mux_id,
                 pin_id=sel,
-                pin_direction=PinDirection.INPUT
+                pin_direction=PinDirection.INPUT,
             )
 
             # Expand all "upstream" muxes that connect to the selected
@@ -412,7 +381,7 @@ class Fasm2Bels(object):
         return routes
 
     def process_switchbox(self, loc, switchbox, features):
-        '''Processes all switchboxes and extract hops from connections.
+        """Processes all switchboxes and extract hops from connections.
 
         The function extracts final connections from inputs to outputs, and
         hops into separate structures for further processing.
@@ -425,21 +394,21 @@ class Fasm2Bels(object):
             a switchbox
         features: list
             list of features regarding given switchbox
-        '''
+        """
         routes = self.decode_switchbox(switchbox, features)
         for k, v in routes.items():
             if v is not None:
-                if re.match('[VH][0-9][LRBT][0-9]', k):
+                if re.match("[VH][0-9][LRBT][0-9]", k):
                     self.designhops[Loc(loc.x, loc.y, 0)][k] = v
                 else:
                     self.designconnections[loc][k] = v
 
     def resolve_hops(self):
-        '''Resolves remaining hop wires.
+        """Resolves remaining hop wires.
 
         It determines the absolute input for the given pin by resolving hop
         wires and adds those final connections to the design connections.
-        '''
+        """
         for loc, conns in self.designconnections.items():
             for pin, source in conns.items():
                 hop = get_name_and_hop(source)
@@ -456,8 +425,7 @@ class Fasm2Bels(object):
                 self.designconnections[loc][pin] = (tloc, hop[0])
 
     def resolve_connections(self):
-        '''Resolves connections between BELs and IOs.
-        '''
+        """Resolves connections between BELs and IOs."""
         keys = sorted(self.routingdata.keys(), key=lambda loc: (loc.x, loc.y))
         for loc in keys:
             routingfeatures = self.routingdata[loc]
@@ -469,7 +437,7 @@ class Fasm2Bels(object):
         self.resolve_hops()
 
     def remap_multiloc_loc(self, loc, pinname=None, celltype=None):
-        '''Unifies coordinates of cells occupying multiple locations.
+        """Unifies coordinates of cells occupying multiple locations.
 
         Some cells, like ASSP, RAM or multipliers occupy multiple locations.
         This method groups bits and connections for those cells into a single
@@ -488,7 +456,7 @@ class Fasm2Bels(object):
         Returns
         -------
         Loc: the new location of the cell
-        '''
+        """
         finloc = loc
         for multiloc in self.multiloccells.values():
             if pinname is None or pinname in multiloc.pinnames or celltype == multiloc.typ:
@@ -498,17 +466,14 @@ class Fasm2Bels(object):
         return finloc
 
     def resolve_multiloc_cells(self):
-        '''Groups cells that are scattered around multiple locations.
-        '''
+        """Groups cells that are scattered around multiple locations."""
         newbelinversions = defaultdict(lambda: defaultdict(list))
         newdesignconnections = defaultdict(dict)
 
         for bellockey, bellocpair in self.belinversions.items():
             for belloctype, belloc in bellocpair.items():
                 if belloctype in self.multiloccells:
-                    newbelinversions[self.remap_multiloc_loc(
-                        bellockey, celltype=belloctype
-                    )][belloctype].extend(belloc)
+                    newbelinversions[self.remap_multiloc_loc(bellockey, celltype=belloctype)][belloctype].extend(belloc)
         self.belinversion = newbelinversions
 
         for loc, conns in self.designconnections.items():
@@ -519,24 +484,20 @@ class Fasm2Bels(object):
                 if srcloc != src[0]:
                     k, v = ((srcloc, src[1]), src)
                     if k in self.org_loc_map:
-                        assert v == self.org_loc_map[k], (
-                            k, self.org_loc_map[k], v
-                        )
+                        assert v == self.org_loc_map[k], (k, self.org_loc_map[k], v)
                     self.org_loc_map[k] = v
 
                 if dstloc != loc:
                     k, v = ((dstloc, pin), (loc, pin))
                     if k in self.org_loc_map:
-                        assert v == self.org_loc_map[k], (
-                            k, self.org_loc_map[k], v
-                        )
+                        assert v == self.org_loc_map[k], (k, self.org_loc_map[k], v)
                     self.org_loc_map[k] = v
 
                 newdesignconnections[dstloc][pin] = (srcloc, src[1])
         self.designconnections = newdesignconnections
 
     def get_clock_for_gmux(self, gmux, loc):
-        '''Returns location of a CLOCK cell associated with the given GMUX
+        """Returns location of a CLOCK cell associated with the given GMUX
         cell. Returns None if not found
 
         Parameters
@@ -549,11 +510,10 @@ class Fasm2Bels(object):
         Returns
         -------
         Loc: the new location of the cell or None
-        '''
+        """
 
         connections = [
-            c for c in self.connections if c.src.type == ConnectionType.TILE
-            and c.dst.type == ConnectionType.TILE
+            c for c in self.connections if c.src.type == ConnectionType.TILE and c.dst.type == ConnectionType.TILE
         ]
         for connection in connections:
 
@@ -588,7 +548,7 @@ class Fasm2Bels(object):
         return None
 
     def get_gmux_for_qmux(self, qmux, loc):
-        '''Returns a map of the given QMUX selection to driving GMUX cells.
+        """Returns a map of the given QMUX selection to driving GMUX cells.
 
         Parameters
         ----------
@@ -601,13 +561,11 @@ class Fasm2Bels(object):
         -------
         Dict: A dict indexed by the selection index holding tuples with format:
             (loc, cell, pin)
-        '''
+        """
 
         sel_map = {}
 
-        connections = [
-            c for c in self.connections if c.dst.type == ConnectionType.CLOCK
-        ]
+        connections = [c for c in self.connections if c.dst.type == ConnectionType.CLOCK]
         for connection in connections:
 
             # Only to a QMUX at the given location
@@ -661,7 +619,7 @@ class Fasm2Bels(object):
         return sel_map
 
     def get_qmux_for_cand(self, cand, loc):
-        ''' Returns a QMUX cell and its location that drives the given CAND
+        """Returns a QMUX cell and its location that drives the given CAND
         cell.
 
         Parameters
@@ -674,26 +632,21 @@ class Fasm2Bels(object):
         Returns
         -------
         Tuple: A tuple holding (loc, cell)
-        '''
+        """
 
-        connections = [
-            c for c in self.connections if c.dst.type == ConnectionType.CLOCK
-        ]
+        connections = [c for c in self.connections if c.dst.type == ConnectionType.CLOCK]
         for connection in connections:
 
             # Only to a CAND at the given location
             # Note: Check also the row above. CAND cells are located in two
             # rows but with fasm features everything gets aligned to even rows
             dst = connection.dst
-            if (dst.loc != loc and dst.loc != Loc(loc.x, loc.y - 1, loc.z)) or \
-               "CAND" not in dst.pin:
+            if (dst.loc != loc and dst.loc != Loc(loc.x, loc.y - 1, loc.z)) or "CAND" not in dst.pin:
                 continue
 
             # CAND cells are named "CAND<index>_<quad>_<column>".
             cell, pin = dst.pin.split(".", maxsplit=1)
-            match = re.match(
-                r"CAND(?P<idx>[0-9]+)_(?P<quad>[A-Z]+)_(?P<col>[0-9]+)", cell
-            )
+            match = re.match(r"CAND(?P<idx>[0-9]+)_(?P<quad>[A-Z]+)_(?P<col>[0-9]+)", cell)
             if match is None:
                 continue
 
@@ -714,20 +667,17 @@ class Fasm2Bels(object):
         return None, None
 
     def resolve_gmux(self):
-        '''Resolves GMUX cells, updates the designconnections map. Also creates
+        """Resolves GMUX cells, updates the designconnections map. Also creates
         connections to CLOCK cells whenever necessary.
 
         Returns
         -------
         Dict: A map of GMUX names to their output wires
-        '''
+        """
 
         # Process GMUX
         gmux_map = dict()
-        gmux_locs = [
-            loc for loc, tile in self.vpr_tile_grid.items()
-            if "GMUX" in tile.type
-        ]
+        gmux_locs = [loc for loc, tile in self.vpr_tile_grid.items() if "GMUX" in tile.type]
         for loc in gmux_locs:
 
             # Group GMUX input pin connections by GMUX cell names
@@ -744,19 +694,12 @@ class Fasm2Bels(object):
 
                 # The IS0 pin has to be routed
                 if "IS0" not in connections:
-                    print(
-                        "WARNING: Pin '{}.IS0' at '{}' is unrouted!".format(
-                            gmux, loc
-                        )
-                    )
+                    print("WARNING: Pin '{}.IS0' at '{}' is unrouted!".format(gmux, loc))
                     continue
 
                 # TODO: For now support only static GMUX settings
                 if connections["IS0"][1] not in ["GND", "VCC"]:
-                    print(
-                        "WARNING: Non-static GMUX selection (at '{}') not supported yet!"
-                        .format(loc)
-                    )
+                    print("WARNING: Non-static GMUX selection (at '{}') not supported yet!".format(loc))
                     continue
 
                 # Static selection
@@ -779,8 +722,7 @@ class Fasm2Bels(object):
                     # Check if the clock pad is enabled. If not then discard
                     # the GMUX
                     bel_features = []
-                    for bel, features in self.interfaces.get(clock_loc,
-                                                             {}).items():
+                    for bel, features in self.interfaces.get(clock_loc, {}).items():
                         for feature in features:
                             bel_features.append("{}.{}".format(bel, feature))
 
@@ -788,15 +730,11 @@ class Fasm2Bels(object):
                         continue
 
                     # Connect it to the output wire of the GMUX
-                    self.designconnections[clock_loc]["CLOCK0_IC"] = (
-                        None, wire
-                    )
+                    self.designconnections[clock_loc]["CLOCK0_IC"] = (None, wire)
 
                     # The GMUX is implicit. Remove all connections to it
                     self.designconnections[loc] = {
-                        k: v
-                        for k, v in self.designconnections[loc].items()
-                        if not k.startswith(gmux)
+                        k: v for k, v in self.designconnections[loc].items() if not k.startswith(gmux)
                     }
 
                 # IC selected
@@ -804,8 +742,7 @@ class Fasm2Bels(object):
 
                     # Check if the IC pin has an active driver. If not then
                     # discard the mux.
-                    if connections.get("IC", (None, None))[1] in [None, "GND",
-                                                                  "VCC"]:
+                    if connections.get("IC", (None, None))[1] in [None, "GND", "VCC"]:
                         continue
 
                     # Create a wire for the GMUX output
@@ -815,8 +752,7 @@ class Fasm2Bels(object):
                     del self.designconnections[loc]["{}_IS0".format(gmux)]
 
                     # Connect the output
-                    self.designconnections[loc]["{}_IZ".format(gmux)
-                                                ] = (None, wire)
+                    self.designconnections[loc]["{}_IZ".format(gmux)] = (None, wire)
 
                 # Store the wire
                 gmux_map[gmux] = wire
@@ -824,7 +760,7 @@ class Fasm2Bels(object):
         return gmux_map
 
     def resolve_qmux(self, gmux_map):
-        '''Resolves QMUX cells, updates the designconnections map.
+        """Resolves QMUX cells, updates the designconnections map.
 
         Parameters
         ----------
@@ -834,14 +770,11 @@ class Fasm2Bels(object):
         Returns
         -------
         Dict: A map of locations and QMUX names to their driving wires
-        '''
+        """
 
         # Process QMUX
         qmux_map = defaultdict(lambda: dict())
-        qmux_locs = [
-            loc for loc, tile in self.vpr_tile_grid.items()
-            if "QMUX" in tile.type
-        ]
+        qmux_locs = [loc for loc, tile in self.vpr_tile_grid.items() if "QMUX" in tile.type]
         for loc in qmux_locs:
 
             # Group QMUX input pin connections by QMUX cell names
@@ -858,49 +791,33 @@ class Fasm2Bels(object):
 
                 # Both IS0 and IS1 must be routed to something
                 if "IS0" not in connections:
-                    print(
-                        "WARNING: Pin '{}.IS0' at '{}' is unrouted!".format(
-                            qmux, loc
-                        )
-                    )
+                    print("WARNING: Pin '{}.IS0' at '{}' is unrouted!".format(qmux, loc))
                 if "IS1" not in connections:
-                    print(
-                        "WARNING: Pin '{}.IS1' at '{}' is unrouted!".format(
-                            qmux, loc
-                        )
-                    )
+                    print("WARNING: Pin '{}.IS1' at '{}' is unrouted!".format(qmux, loc))
 
                 if "IS0" not in connections or "IS1" not in connections:
                     continue
 
                 # TODO: For now support only static QMUX settings
                 if connections["IS0"][1] not in ["GND", "VCC"]:
-                    print(
-                        "WARNING: Non-static QMUX selection (at '{}') not supported yet!"
-                        .format(loc)
-                    )
+                    print("WARNING: Non-static QMUX selection (at '{}') not supported yet!".format(loc))
                     continue
                 if connections["IS1"][1] not in ["GND", "VCC"]:
-                    print(
-                        "WARNING: Non-static QMUX selection (at '{}') not supported yet!"
-                        .format(loc)
-                    )
+                    print("WARNING: Non-static QMUX selection (at '{}') not supported yet!".format(loc))
                     continue
 
                 # Get associated GMUXes
                 sel_map = self.get_gmux_for_qmux(qmux, loc)
 
                 # Static selection
-                sel = int(connections["IS0"][1] == "VCC"
-                          ) * 2 + int(connections["IS1"][1] == "VCC")
+                sel = int(connections["IS0"][1] == "VCC") * 2 + int(connections["IS1"][1] == "VCC")
 
                 # Input from the routing network selected, create a new wire
                 if sel == 3:
 
                     # Check if the HSCKIN input is connected to an active
                     # driver. If not then discard the QMUX
-                    if connections.get("HSCKIN", (None, None))[1] in \
-                       [None, "GND", "VCC"]:
+                    if connections.get("HSCKIN", (None, None))[1] in [None, "GND", "VCC"]:
                         continue
 
                     # Create a wire for the QMUX output
@@ -911,8 +828,7 @@ class Fasm2Bels(object):
                     del self.designconnections[loc]["{}_IS1".format(qmux)]
 
                     # Connect the output
-                    self.designconnections[loc]["{}_IZ".format(qmux)
-                                                ] = (None, wire)
+                    self.designconnections[loc]["{}_IZ".format(qmux)] = (None, wire)
 
                 # Input from a GMUX is selected, assign its wire here
                 else:
@@ -927,9 +843,7 @@ class Fasm2Bels(object):
 
                     # The QMUX is implicit. Remove all connections to it
                     self.designconnections[loc] = {
-                        k: v
-                        for k, v in self.designconnections[loc].items()
-                        if not k.startswith(qmux)
+                        k: v for k, v in self.designconnections[loc].items() if not k.startswith(qmux)
                     }
 
                 # Store the wire
@@ -938,7 +852,7 @@ class Fasm2Bels(object):
         return dict(qmux_map)
 
     def resolve_cand(self, qmux_map):
-        '''Resolves CAND cells, creates the cand_map map.
+        """Resolves CAND cells, creates the cand_map map.
 
         Parameters
         ----------
@@ -948,7 +862,7 @@ class Fasm2Bels(object):
         Returns
         -------
         None
-        '''
+        """
 
         # Process CAND
         for loc, all_features in self.colclk_data.items():
@@ -988,13 +902,13 @@ class Fasm2Bels(object):
                     self.cand_map[sb_loc][cand] = wire
 
     def resolve_global_clock_network(self):
-        '''Resolves the global clock network. Creates the cand_map, updates
+        """Resolves the global clock network. Creates the cand_map, updates
         the designconnections.
 
         Returns
         -------
         None
-        '''
+        """
 
         # Resolve GMUXes
         gmux_map = self.resolve_gmux()
@@ -1004,18 +918,25 @@ class Fasm2Bels(object):
         self.resolve_cand(qmux_map)
 
     def produce_verilog(self, pcf_data):
-        '''Produces string containing Verilog module representing FASM.
+        """Produces string containing Verilog module representing FASM.
 
         Returns
         -------
         str, str: a Verilog module and PCF
-        '''
+        """
 
         module = VModule(
-            self.vpr_tile_grid, self.vpr_tile_types, self.cells_library,
-            pcf_data, self.belinversions, self.interfaces,
-            self.designconnections, self.org_loc_map, self.cand_map,
-            self.inversionpins, self.io_to_fbio
+            self.vpr_tile_grid,
+            self.vpr_tile_types,
+            self.cells_library,
+            pcf_data,
+            self.belinversions,
+            self.interfaces,
+            self.designconnections,
+            self.org_loc_map,
+            self.cand_map,
+            self.inversionpins,
+            self.io_to_fbio,
         )
         module.parse_bels()
         verilog = module.generate_verilog()
@@ -1024,7 +945,7 @@ class Fasm2Bels(object):
         return verilog, pcf, qcf
 
     def convert_to_verilog(self, fasmlines):
-        '''Runs all methods required to convert FASM lines to Verilog module.
+        """Runs all methods required to convert FASM lines to Verilog module.
 
         Parameters
         ----------
@@ -1034,7 +955,7 @@ class Fasm2Bels(object):
         Returns
         -------
         str: a Verilog module
-        '''
+        """
         self.parse_fasm_lines(fasmlines)
         self.resolve_connections()
         self.resolve_multiloc_cells()
@@ -1045,67 +966,43 @@ class Fasm2Bels(object):
 
 def parse_pcf(pcf):
     pcf_data = {}
-    with open(pcf, 'r') as fp:
+    with open(pcf, "r") as fp:
         for line in fp:
             line = line.strip().split()
             if len(line) < 3:
                 continue
             if len(line) > 3 and not line[3].startswith("#"):
                 continue
-            if line[0] != 'set_io':
+            if line[0] != "set_io":
                 continue
             pcf_data[line[2]] = line[1]
     return pcf_data
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Parse arguments
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument("input_file", type=Path, help="Input fasm file")
 
-    parser.add_argument(
-        "--phy-db",
-        type=str,
-        required=True,
-        help="Physical device database file"
-    )
+    parser.add_argument("--phy-db", type=str, required=True, help="Physical device database file")
 
-    parser.add_argument(
-        "--device-name",
-        type=str,
-        required=True,
-        choices=["eos-s3", "pp3e"],
-        help="Device name"
-    )
+    parser.add_argument("--device-name", type=str, required=True, choices=["eos-s3", "pp3e"], help="Device name")
 
-    parser.add_argument(
-        "--package-name", type=str, required=True, help="Device package name"
-    )
+    parser.add_argument("--package-name", type=str, required=True, help="Device package name")
 
     parser.add_argument(
         "--input-type",
         type=str,
-        choices=['bitstream', 'fasm'],
-        default='fasm',
-        help="Determines whether the input is a FASM file or bitstream"
+        choices=["bitstream", "fasm"],
+        default="fasm",
+        help="Determines whether the input is a FASM file or bitstream",
     )
 
+    parser.add_argument("--output-verilog", type=Path, required=True, help="Output Verilog file")
     parser.add_argument(
-        "--output-verilog",
-        type=Path,
-        required=True,
-        help="Output Verilog file"
-    )
-    parser.add_argument(
-        "--input-pcf",
-        type=Path,
-        required=False,
-        help="Pins constraint file to maintain original pin names"
+        "--input-pcf", type=Path, required=False, help="Pins constraint file to maintain original pin names"
     )
 
     parser.add_argument("--output-pcf", type=Path, help="Output PCF file")
@@ -1125,41 +1022,33 @@ if __name__ == '__main__':
     f2b = Fasm2Bels(db, args.device_name, args.package_name)
 
     # Disassemble bitstream / load FASM
-    if args.input_type == 'bitstream':
-        qlfasmdb = load_quicklogic_database(
-            get_db_dir("ql-" + args.device_name)
-        )
+    if args.input_type == "bitstream":
+        qlfasmdb = load_quicklogic_database(get_db_dir("ql-" + args.device_name))
 
         if args.device_name == "eos-s3":
             assembler = QL732BAssembler(qlfasmdb)
         elif args.device_name == "pp3e":
-            assembler = QL732BAssembler(
-                qlfasmdb
-            )  # Workaround: use EOS-S3 assembler for PP3E
+            assembler = QL732BAssembler(qlfasmdb)  # Workaround: use EOS-S3 assembler for PP3E
         else:
             assert False, args.device_name
 
         assembler.read_bitstream(args.input_file)
         fasmlines = assembler.disassemble()
-        fasmlines = [
-            line for line in fasm.parse_fasm_string('\n'.join(fasmlines))
-        ]
+        fasmlines = [line for line in fasm.parse_fasm_string("\n".join(fasmlines))]
 
     else:
-        fasmlines = [
-            line for line in fasm.parse_fasm_filename(args.input_file)
-        ]
+        fasmlines = [line for line in fasm.parse_fasm_filename(args.input_file)]
 
     # Run fasm2bels
     verilog, pcf, qcf = f2b.convert_to_verilog(fasmlines)
 
     # Write output files
-    with open(args.output_verilog, 'w') as outv:
+    with open(args.output_verilog, "w") as outv:
         outv.write(verilog)
 
     if args.output_pcf:
-        with open(args.output_pcf, 'w') as outpcf:
+        with open(args.output_pcf, "w") as outpcf:
             outpcf.write(pcf)
     if args.output_qcf:
-        with open(args.output_qcf, 'w') as outqcf:
+        with open(args.output_qcf, "w") as outqcf:
             outqcf.write(qcf)

@@ -160,11 +160,7 @@ def find_and_split_inout_ports_and_nets(design, module_name):
             nets |= get_nets(connection)
 
     # Get all inout ports
-    inouts = {
-        k: v
-        for k, v in module["ports"].items()
-        if v["direction"] == "inout"
-    }
+    inouts = {k: v for k, v in module["ports"].items() if v["direction"] == "inout"}
 
     # Split ports
     new_ports = {}
@@ -197,10 +193,12 @@ def find_and_split_inout_ports_and_nets(design, module_name):
                 else:
                     new_port["bits"].append(n)
 
-            port_map.append((
-                name,
-                new_name,
-            ))
+            port_map.append(
+                (
+                    name,
+                    new_name,
+                )
+            )
             new_ports[new_name] = new_port
 
     # Add inputs and outputs
@@ -231,11 +229,7 @@ def find_and_split_inout_ports_and_nets(design, module_name):
 
     # Add netnames related to new input and output ports
     for name, port in new_ports.items():
-        netnames[name] = {
-            "hide_name": 0,
-            "bits": port["bits"],
-            "attributes": {}
-        }
+        netnames[name] = {"hide_name": 0, "bits": port["bits"], "attributes": {}}
 
     return port_map, net_map
 
@@ -271,17 +265,13 @@ def remap_connections(design, module_name, net_map):
             # Remove connections to the output net from input port and vice
             # versa.
             for dir in ["input", "output"]:
-                if port_directions[port_name] == dir and \
-                   port_name.endswith("$" + dir[:3]):
+                if port_directions[port_name] == dir and port_name.endswith("$" + dir[:3]):
 
                     for i, n in enumerate(port_nets):
                         if n in net_map:
                             mapped_n = net_map[n][dir[0]]
                             port_nets[i] = mapped_n
-                            print(
-                                "Mapping connection {}.{}[{}] from {} to {}".
-                                format(name, port_name, i, n, mapped_n)
-                            )
+                            print("Mapping connection {}.{}[{}] from {} to {}".format(name, port_name, i, n, mapped_n))
 
 
 # =============================================================================
@@ -293,10 +283,7 @@ def main():
     """
 
     # Parse args
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-i", required=True, type=str, help="Input JSON")
     parser.add_argument("-o", default=None, type=str, help="Output JSON")
 

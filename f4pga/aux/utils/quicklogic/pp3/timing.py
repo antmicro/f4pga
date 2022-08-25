@@ -177,8 +177,7 @@ def compute_switchbox_timing_model(switchbox, timing_data):
             # force the regression line to be flat.
             if a < 0.0:
                 print(
-                    "WARNING: For '{} {}' the delay model slope is negative! (a={:.2e})"
-                    .format(switchbox.type, sink, a)
+                    "WARNING: For '{} {}' the delay model slope is negative! (a={:.2e})".format(switchbox.type, sink, a)
                 )
                 a = 0.0
 
@@ -204,10 +203,7 @@ def compute_switchbox_timing_model(switchbox, timing_data):
         # Compute sink capacitance. Since we have multiple edge timings that
         # should yield the same capacitance, compute one for each timing and
         # then choose the worst case (max).
-        sink_cs = {
-            s: (cfs[0] / (FACTOR * driver_r) - sink_tdel[s])
-            for s, cfs in coeffs.items()
-        }
+        sink_cs = {s: (cfs[0] / (FACTOR * driver_r) - sink_tdel[s]) for s, cfs in coeffs.items()}
         sink_c = max(sink_cs.values())
 
         # Sanity check
@@ -219,18 +215,14 @@ def compute_switchbox_timing_model(switchbox, timing_data):
             # Compute for this sink
             error = {}
             for n, true_delay in edge_timings[sink].items():
-                model_delay = driver_tdel + FACTOR * driver_r * sink_c * n + sink_tdel[
-                    sink]
+                model_delay = driver_tdel + FACTOR * driver_r * sink_c * n + sink_tdel[sink]
                 error[n] = true_delay - model_delay
 
             max_error = max([abs(e) for e in error.values()])
 
             # Report the error
             if max_error > ERROR_THRESHOLD:
-                print(
-                    "WARNING: Error of the timing model of '{} {}' is too high:"
-                    .format(switchbox.type, sink)
-                )
+                print("WARNING: Error of the timing model of '{} {}' is too high:".format(switchbox.type, sink))
                 print("--------------------------------------------")
                 print("| # loads | actual   | model    | error    |")
                 print("|---------+----------+----------+----------|")
@@ -238,9 +230,7 @@ def compute_switchbox_timing_model(switchbox, timing_data):
                 for n in edge_timings[sink].keys():
                     print(
                         "| {:<8}| {:<9.3f}| {:<9.3f}| {:<9.3f}|".format(
-                            n, 1e9 * edge_timings[sink][n],
-                            1e9 * (edge_timings[sink][n] - error[n]),
-                            1e9 * error[n]
+                            n, 1e9 * edge_timings[sink][n], 1e9 * (edge_timings[sink][n] - error[n]), 1e9 * error[n]
                         )
                     )
 
@@ -249,19 +239,13 @@ def compute_switchbox_timing_model(switchbox, timing_data):
 
         # Store the data
         driver_timing[driver] = Timing(
-            driver_r=driver_r,
-            driver_tdel=driver_tdel,
-            sink_tdel={s: d
-                       for s, d in sink_tdel.items()},
-            sink_c=sink_c
+            driver_r=driver_r, driver_tdel=driver_tdel, sink_tdel={s: d for s, d in sink_tdel.items()}, sink_c=sink_c
         )
 
     return driver_timing, sink_map
 
 
-def populate_switchbox_timing(
-        switchbox, driver_timing, sink_map, vpr_switches
-):
+def populate_switchbox_timing(switchbox, driver_timing, sink_map, vpr_switches):
     """
     Populates the switchbox timing model by annotating its muxes with the timing
     data. Creates new VPR switches with required parameters or uses existing
@@ -279,9 +263,7 @@ def populate_switchbox_timing(
             c=0.0,
         )
 
-        driver_vpr_switch = add_named_item(
-            vpr_switches, driver_vpr_switch, driver_vpr_switch.name
-        )
+        driver_vpr_switch = add_named_item(vpr_switches, driver_vpr_switch, driver_vpr_switch.name)
 
         # Annotate all driver's edges
         for sink in sink_map[driver]:
@@ -295,9 +277,7 @@ def populate_switchbox_timing(
                 c=timing.sink_c,
             )
 
-            sink_vpr_switch = add_named_item(
-                vpr_switches, sink_vpr_switch, sink_vpr_switch.name
-            )
+            sink_vpr_switch = add_named_item(vpr_switches, sink_vpr_switch, sink_vpr_switch.name)
 
             # Get the mux
             stage = switchbox.stages[stage_id]
@@ -307,16 +287,8 @@ def populate_switchbox_timing(
             assert pin_id not in mux.timing
 
             mux.timing[pin_id] = MuxEdgeTiming(
-                driver=DriverTiming(
-                    tdel=timing.driver_tdel,
-                    r=timing.driver_r,
-                    vpr_switch=driver_vpr_switch.name
-                ),
-                sink=SinkTiming(
-                    tdel=timing.sink_tdel,
-                    c=timing.sink_c,
-                    vpr_switch=sink_vpr_switch.name
-                )
+                driver=DriverTiming(tdel=timing.driver_tdel, r=timing.driver_r, vpr_switch=driver_vpr_switch.name),
+                sink=SinkTiming(tdel=timing.sink_tdel, c=timing.sink_c, vpr_switch=sink_vpr_switch.name),
             )
 
 
@@ -346,11 +318,7 @@ def add_vpr_switches_for_cell(cell_type, cell_timings):
     """
 
     # Filter timings for the cell
-    timings = {
-        k: v
-        for k, v in cell_timings.items()
-        if k.startswith(cell_type)
-    }
+    timings = {k: v for k, v in cell_timings.items() if k.startswith(cell_type)}
 
     # Add VPR switches
     vpr_switches = {}
@@ -363,10 +331,7 @@ def add_vpr_switches_for_cell(cell_type, cell_timings):
                     continue
 
                 # Get data
-                name = "{}.{}.{}.{}".format(
-                    cell_type, instance, timing_data["from_pin"],
-                    timing_data["to_pin"]
-                )
+                name = "{}.{}.{}.{}".format(cell_type, instance, timing_data["from_pin"], timing_data["to_pin"])
                 tdel = timing_data["delay_paths"]["slow"]["avg"]
 
                 # Add the switch

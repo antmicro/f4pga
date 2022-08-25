@@ -23,13 +23,13 @@ import re
 import f4pga.aux.utils.eblif as eblif
 import lxml.etree as ET
 
-IoConstraint = namedtuple('IoConstraint', 'name x y z comment')
+IoConstraint = namedtuple("IoConstraint", "name x y z comment")
 
 HEADER_TEMPLATE = """\
 #{name:<{nl}} x   y   z    pcf_line
 #{s:-^{nl}} --  --  -    ----"""
 
-CONSTRAINT_TEMPLATE = '{name:<{nl}} {x: 3} {y: 3} {z: 2}  # {comment}'
+CONSTRAINT_TEMPLATE = "{name:<{nl}} {x: 3} {y: 3} {z: 2}  # {comment}"
 INOUT_REGEX = re.compile(r"^(.+)(_\$inp|_\$out)(.*)$")
 NETNAME_REGEX = re.compile(r"(.+?)(\[[0-9]+\]$|$)")
 
@@ -48,29 +48,29 @@ class IoPlace(object):
 
     def read_io_loc_pairs(self, blif):
         """
-         Read IO_LOC_PAIRS parameters from eblif carrying the information
-         which package pin a specified top port is constrained, e.g. O_LOC_PAIRS = "portA:D1"
-         In case of differential inputs/outputs there are two pairs of the parameter,
-         i.e. IO_LOC_PAIRS = "portA_p:D2,portA_n:D4"
+        Read IO_LOC_PAIRS parameters from eblif carrying the information
+        which package pin a specified top port is constrained, e.g. O_LOC_PAIRS = "portA:D1"
+        In case of differential inputs/outputs there are two pairs of the parameter,
+        i.e. IO_LOC_PAIRS = "portA_p:D2,portA_n:D4"
         """
-        if 'subckt' not in blif:
+        if "subckt" not in blif:
             return
-        for attr in blif['subckt']:
-            if 'param' not in attr:
+        for attr in blif["subckt"]:
+            if "param" not in attr:
                 continue
-            if 'IO_LOC_PAIRS' in attr['param']:
-                locs = attr['param']['IO_LOC_PAIRS'][1:-1].split(',')
-                if 'NONE' in locs:
+            if "IO_LOC_PAIRS" in attr["param"]:
+                locs = attr["param"]["IO_LOC_PAIRS"][1:-1].split(",")
+                if "NONE" in locs:
                     continue
                 for loc in locs:
-                    net, pad = loc.split(':')
+                    net, pad = loc.split(":")
                     self.net_to_pad.add((net, pad))
 
     def read_io_list_from_eblif(self, eblif_file):
         blif = eblif.parse_blif(eblif_file)
 
-        self.inputs = set(blif['inputs']['args'])
-        self.outputs = set(blif['outputs']['args'])
+        self.inputs = set(blif["inputs"]["args"])
+        self.outputs = set(blif["outputs"]["args"])
 
         # Build a net name map that maps products of an inout port split into
         # their formet name.
@@ -149,7 +149,7 @@ class IoPlace(object):
 
         # VPR prefixes output constraints with "out:"
         if net_name in self.outputs:
-            net_name = 'out:' + net_name
+            net_name = "out:" + net_name
 
         # This is an inout net
         if net_name in self.inout_nets:
@@ -180,7 +180,7 @@ class IoPlace(object):
 
         # VPR prefixes output constraints with "out:"
         if net_name in self.outputs:
-            net_name = 'out:' + net_name
+            net_name = "out:" + net_name
 
         # This is an inout net
         if net_name in self.inout_nets:
@@ -209,12 +209,7 @@ class IoPlace(object):
 
     def output_io_place(self, f):
         max_name_length = max(len(c.name) for c in self.constraints.values())
-        print(
-            HEADER_TEMPLATE.format(
-                name="Block Name", nl=max_name_length, s=""
-            ),
-            file=f
-        )
+        print(HEADER_TEMPLATE.format(name="Block Name", nl=max_name_length, s=""), file=f)
 
         constrained_blocks = {}
 
@@ -227,14 +222,9 @@ class IoPlace(object):
             if name in constrained_blocks:
                 existing = constrained_blocks[name]
 
-                if existing.x != constraint.x or\
-                   existing.y != constraint.y or\
-                   existing.z != constraint.z:
+                if existing.x != constraint.x or existing.y != constraint.y or existing.z != constraint.z:
 
-                    print(
-                        "Error: block '{}' has multiple conflicting constraints!"
-                        .format(name)
-                    )
+                    print("Error: block '{}' has multiple conflicting constraints!".format(name))
                     print("", constrained_blocks[name])
                     print("", constraint)
                     exit(-1)
@@ -251,9 +241,9 @@ class IoPlace(object):
                         x=constraint.x,
                         y=constraint.y,
                         z=constraint.z,
-                        comment=constraint.comment
+                        comment=constraint.comment,
                     ),
-                    file=f
+                    file=f,
                 )
 
                 # Add to constrained block list

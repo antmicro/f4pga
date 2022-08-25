@@ -135,8 +135,7 @@ def process_get_ports(match, pad_to_net, valid_pins=None, valid_nets=None):
 
         # If we have a valid pins list and the pad is in the map then re-map it
         if valid_pins and pad in valid_pins:
-            assert pad in pad_to_net, \
-                "The pin '{}' is not associated with any net in PCF".format(pad)
+            assert pad in pad_to_net, "The pin '{}' is not associated with any net in PCF".format(pad)
             net = pad_to_net[pad].net
 
         # If we don't have a valid pins list then just look up in the PCF
@@ -151,8 +150,7 @@ def process_get_ports(match, pad_to_net, valid_pins=None, valid_nets=None):
 
         # If we have a valit net list then validate the net name
         if valid_nets:
-            assert net in valid_nets, \
-                "The net '{}' is not present in the netlist".format(net)
+            assert net in valid_nets, "The net '{}' is not present in the netlist".format(net)
 
         # Escape square brackets
         net = net.replace("[", "\\[")
@@ -179,26 +177,13 @@ def process_get_ports(match, pad_to_net, valid_pins=None, valid_nets=None):
 def main():
 
     # Parse arguments
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument(
-        "--sdc-in", type=str, required=True, help="Input SDC file"
-    )
-    parser.add_argument(
-        "--pcf", type=str, required=True, help="Input PCF file"
-    )
-    parser.add_argument(
-        "--sdc-out", type=str, required=True, help="Output SDC file"
-    )
-    parser.add_argument(
-        "--eblif", type=str, default=None, help="Input EBLIF netlist file"
-    )
-    parser.add_argument(
-        "--pin-map", type=str, default=None, help="Input CSV pin map file"
-    )
+    parser.add_argument("--sdc-in", type=str, required=True, help="Input SDC file")
+    parser.add_argument("--pcf", type=str, required=True, help="Input PCF file")
+    parser.add_argument("--sdc-out", type=str, required=True, help="Output SDC file")
+    parser.add_argument("--eblif", type=str, default=None, help="Input EBLIF netlist file")
+    parser.add_argument("--pin-map", type=str, default=None, help="Input CSV pin map file")
 
     args = parser.parse_args()
 
@@ -210,8 +195,7 @@ def main():
     pad_to_net = {}
     for constr in pcf_constraints:
         if isinstance(constr, PcfIoConstraint):
-            assert constr.pad not in pad_to_net, \
-                "Multiple nets constrained to pin '{}'".format(constr.pad)
+            assert constr.pad not in pad_to_net, "Multiple nets constrained to pin '{}'".format(constr.pad)
             pad_to_net[constr.pad] = constr
 
     # Read the input SDC file
@@ -241,9 +225,7 @@ def main():
     sdc_lines = sdc.splitlines()
     for i in range(len(sdc_lines)):
         if not sdc_lines[i].strip().startswith("#"):
-            sdc_lines[i] = re.sub(
-                r"\[\s*get_ports\s+(?P<arg>.*)\]", sub_cb, sdc_lines[i]
-            )
+            sdc_lines[i] = re.sub(r"\[\s*get_ports\s+(?P<arg>.*)\]", sub_cb, sdc_lines[i])
 
     # Write the output SDC file
     sdc = "\n".join(sdc_lines) + "\n"

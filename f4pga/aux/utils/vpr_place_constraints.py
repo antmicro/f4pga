@@ -20,13 +20,13 @@ from __future__ import print_function
 from collections import OrderedDict, namedtuple
 import lxml.etree as ET
 
-PlaceConstraint = namedtuple('PlaceConstraint', 'name x y z comment')
+PlaceConstraint = namedtuple("PlaceConstraint", "name x y z comment")
 
 HEADER_TEMPLATE = """\
 #{name:<{nl}} x   y   z    pcf_line
 #{s:-^{nl}} --  --  -    ----"""
 
-CONSTRAINT_TEMPLATE = '{name:<{nl}} {x: 3} {y: 3} {z: 2}  # {comment}'
+CONSTRAINT_TEMPLATE = "{name:<{nl}} {x: 3} {y: 3} {z: 2}  # {comment}"
 
 
 def get_root_cluster(curr):
@@ -58,15 +58,14 @@ class PlaceConstraints(object):
         self.net_to_block = {}
         self.block_to_root_block = {}
 
-        for el in self.net_root.iter('block'):
+        for el in self.net_root.iter("block"):
             root_block = get_root_cluster(el)
             if root_block is not None:
-                self.block_to_root_block[el.attrib['name']
-                                         ] = root_block.attrib['name']
+                self.block_to_root_block[el.attrib["name"]] = root_block.attrib["name"]
 
         for attr in self.net_root.xpath("//attribute"):
             name = attr.attrib["name"]
-            if name != 'LOC':
+            if name != "LOC":
                 continue
 
             # Get block name
@@ -110,14 +109,9 @@ class PlaceConstraints(object):
             if name in constrained_blocks:
                 existing = constrained_blocks[name]
 
-                if existing.x != constraint.x or\
-                   existing.y != constraint.y or\
-                   existing.z != constraint.z:
+                if existing.x != constraint.x or existing.y != constraint.y or existing.z != constraint.z:
 
-                    print(
-                        "Error: block '{}' has multiple conflicting constraints!"
-                        .format(name)
-                    )
+                    print("Error: block '{}' has multiple conflicting constraints!".format(name))
                     print("", constrained_blocks[name])
                     print("", constraint)
                     exit(-1)
@@ -134,9 +128,9 @@ class PlaceConstraints(object):
                         x=constraint.x,
                         y=constraint.y,
                         z=constraint.z,
-                        comment=constraint.comment
+                        comment=constraint.comment,
                     ),
-                    file=f
+                    file=f,
                 )
 
                 # Add to constrained block list
@@ -173,10 +167,10 @@ class PlaceConstraints(object):
 
         instances = list()
 
-        for el in self.net_root.iter('block'):
-            inst = el.attrib['instance']
+        for el in self.net_root.iter("block"):
+            inst = el.attrib["instance"]
             if instance in inst:
                 if len(el.getchildren()) != 0:
-                    instances.append(get_root_cluster(el).attrib['name'])
+                    instances.append(get_root_cluster(el).attrib["name"])
 
         return instances

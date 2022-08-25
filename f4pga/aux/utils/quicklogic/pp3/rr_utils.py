@@ -53,22 +53,19 @@ def add_node(graph, loc, direction, segment_id):
             x_high=loc.x,
             y_low=loc.y,
             y_high=loc.y,
-        ), segment_id
+        ),
+        segment_id,
     )
 
 
-def add_edge(
-        graph, src_node_id, dst_node_id, switch_id, meta_name=None,
-        meta_value=""
-):
+def add_edge(graph, src_node_id, dst_node_id, switch_id, meta_name=None, meta_value=""):
     """
     Adds an edge to the routing graph. If the given switch corresponds to a
     "pass" type switch then adds two edges going both ways.
     """
 
     # Sanity check
-    assert src_node_id != dst_node_id, \
-        (src_node_id, dst_node_id, switch_id, meta_name, meta_value)
+    assert src_node_id != dst_node_id, (src_node_id, dst_node_id, switch_id, meta_name, meta_value)
 
     # Connect src to dst
     graph.add_edge(src_node_id, dst_node_id, switch_id, meta_name, meta_value)
@@ -78,9 +75,7 @@ def add_edge(
     switch = graph.switch_map[switch_id]
     if switch.type in [rr.SwitchType.SHORT, rr.SwitchType.PASS_GATE]:
 
-        graph.add_edge(
-            dst_node_id, src_node_id, switch_id, meta_name, meta_value
-        )
+        graph.add_edge(dst_node_id, src_node_id, switch_id, meta_name, meta_value)
 
 
 # =============================================================================
@@ -110,15 +105,7 @@ def node_joint_location(node_a, node_b):
     assert False, (node_a, node_b)
 
 
-def connect(
-        graph,
-        src_node,
-        dst_node,
-        switch_id=None,
-        segment_id=None,
-        meta_name=None,
-        meta_value=""
-):
+def connect(graph, src_node, dst_node, switch_id=None, segment_id=None, meta_name=None, meta_value=""):
     """
     Connect two VPR nodes in a way that certain rules are obeyed.
 
@@ -171,9 +158,7 @@ def connect(
         node_joint_location(src_node, dst_node)
 
         # Connect directly
-        add_edge(
-            graph, src_node.id, dst_node.id, switch_id, meta_name, meta_value
-        )
+        add_edge(graph, src_node.id, dst_node.id, switch_id, meta_name, meta_value)
 
     # CHANX to CHANX or CHANY to CHANY
     elif chany_to_chany or chanx_to_chanx:
@@ -185,17 +170,12 @@ def connect(
         pad_node = add_node(graph, loc, direction, segment_id)
 
         # Connect through the padding node
-        add_edge(
-            graph, src_node.id, pad_node.id, graph.get_delayless_switch_id()
-        )
+        add_edge(graph, src_node.id, pad_node.id, graph.get_delayless_switch_id())
 
-        add_edge(
-            graph, pad_node.id, dst_node.id, switch_id, meta_name, meta_value
-        )
+        add_edge(graph, pad_node.id, dst_node.id, switch_id, meta_name, meta_value)
 
     # OPIN to CHANX/CHANY
-    elif src_node.type == rr.NodeType.OPIN and dst_node.type in \
-        [rr.NodeType.CHANX, rr.NodeType.CHANY]:
+    elif src_node.type == rr.NodeType.OPIN and dst_node.type in [rr.NodeType.CHANX, rr.NodeType.CHANY]:
 
         # All OPINs go right (towards +X)
         assert src_node.loc.side == tracks.Direction.RIGHT, src_node
@@ -209,32 +189,22 @@ def connect(
             pad_node = add_node(graph, loc, "Y", segment_id)
 
             # Connect through the padding node
-            add_edge(
-                graph, src_node.id, pad_node.id,
-                graph.get_delayless_switch_id()
-            )
+            add_edge(graph, src_node.id, pad_node.id, graph.get_delayless_switch_id())
 
-            add_edge(
-                graph, pad_node.id, dst_node.id, switch_id, meta_name,
-                meta_value
-            )
+            add_edge(graph, pad_node.id, dst_node.id, switch_id, meta_name, meta_value)
 
         # Connected to CHANY
         elif dst_node.type == rr.NodeType.CHANY:
 
             # Directly
-            add_edge(
-                graph, src_node.id, dst_node.id, switch_id, meta_name,
-                meta_value
-            )
+            add_edge(graph, src_node.id, dst_node.id, switch_id, meta_name, meta_value)
 
         # Should not happen
         else:
             assert False, dst_node
 
     # CHANX/CHANY to IPIN
-    elif dst_node.type == rr.NodeType.IPIN and src_node.type in \
-        [rr.NodeType.CHANX, rr.NodeType.CHANY]:
+    elif dst_node.type == rr.NodeType.IPIN and src_node.type in [rr.NodeType.CHANX, rr.NodeType.CHANY]:
 
         # All IPINs go top (toward +Y)
         assert dst_node.loc.side == tracks.Direction.TOP, dst_node
@@ -248,24 +218,15 @@ def connect(
             pad_node = add_node(graph, loc, "X", segment_id)
 
             # Connect through the padding node
-            add_edge(
-                graph, src_node.id, pad_node.id,
-                graph.get_delayless_switch_id()
-            )
+            add_edge(graph, src_node.id, pad_node.id, graph.get_delayless_switch_id())
 
-            add_edge(
-                graph, pad_node.id, dst_node.id, switch_id, meta_name,
-                meta_value
-            )
+            add_edge(graph, pad_node.id, dst_node.id, switch_id, meta_name, meta_value)
 
         # Connected to CHANX
         elif src_node.type == rr.NodeType.CHANX:
 
             # Directly
-            add_edge(
-                graph, src_node.id, dst_node.id, switch_id, meta_name,
-                meta_value
-            )
+            add_edge(graph, src_node.id, dst_node.id, switch_id, meta_name, meta_value)
 
         # Should not happen
         else:

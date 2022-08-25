@@ -30,9 +30,15 @@ from f4pga.aux.utils.lib.parse_pcf import parse_simple_pcf
 
 # Known IOB types and VPR cells that can be placed at their sites
 IOB_TYPES = {
-    "CLOCK": ["PB-CLOCK", ],
-    "BIDIR": ["PB-BIDIR", ],
-    "SDIOMUX": ["PB-SDIOMUX", ],
+    "CLOCK": [
+        "PB-CLOCK",
+    ],
+    "BIDIR": [
+        "PB-BIDIR",
+    ],
+    "SDIOMUX": [
+        "PB-SDIOMUX",
+    ],
 }
 
 BLOCK_INSTANCE_RE = re.compile(r"^(?P<name>\S+)\[(?P<index>[0-9]+)\]$")
@@ -41,47 +47,14 @@ BLOCK_INSTANCE_RE = re.compile(r"^(?P<name>\S+)\[(?P<index>[0-9]+)\]$")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Convert a PCF file into a VPR io.place file.'
-    )
+    parser = argparse.ArgumentParser(description="Convert a PCF file into a VPR io.place file.")
+    parser.add_argument("--pcf", "-p", "-P", type=argparse.FileType("r"), required=True, help="PCF input file")
+    parser.add_argument("--blif", "-b", type=argparse.FileType("r"), required=True, help="BLIF / eBLIF file")
+    parser.add_argument("--map", "-m", "-M", type=argparse.FileType("r"), required=True, help="Pin map CSV file")
     parser.add_argument(
-        "--pcf",
-        "-p",
-        "-P",
-        type=argparse.FileType('r'),
-        required=True,
-        help='PCF input file'
+        "--output", "-o", "-O", type=argparse.FileType("w"), default=sys.stdout, help="The output io.place file"
     )
-    parser.add_argument(
-        "--blif",
-        "-b",
-        type=argparse.FileType('r'),
-        required=True,
-        help='BLIF / eBLIF file'
-    )
-    parser.add_argument(
-        "--map",
-        "-m",
-        "-M",
-        type=argparse.FileType('r'),
-        required=True,
-        help='Pin map CSV file'
-    )
-    parser.add_argument(
-        "--output",
-        "-o",
-        "-O",
-        type=argparse.FileType('w'),
-        default=sys.stdout,
-        help='The output io.place file'
-    )
-    parser.add_argument(
-        "--net",
-        "-n",
-        type=argparse.FileType('r'),
-        required=True,
-        help='top.net file'
-    )
+    parser.add_argument("--net", "-n", type=argparse.FileType("r"), required=True, help="top.net file")
 
     args = parser.parse_args()
 
@@ -95,21 +68,21 @@ def main():
 
     for pin_map_entry in csv.DictReader(args.map):
 
-        if pin_map_entry['type'] not in IOB_TYPES:
+        if pin_map_entry["type"] not in IOB_TYPES:
             continue
 
-        name = pin_map_entry['name']
+        name = pin_map_entry["name"]
         alias = ""
-        if 'alias' in pin_map_entry:
-            alias = pin_map_entry['alias']
+        if "alias" in pin_map_entry:
+            alias = pin_map_entry["alias"]
 
-        for t in IOB_TYPES[pin_map_entry['type']]:
+        for t in IOB_TYPES[pin_map_entry["type"]]:
             pad_map[name][t] = (
-                int(pin_map_entry['x']),
-                int(pin_map_entry['y']),
-                int(pin_map_entry['z']),
+                int(pin_map_entry["x"]),
+                int(pin_map_entry["y"]),
+                int(pin_map_entry["z"]),
             )
-            if 'alias' in pin_map_entry:
+            if "alias" in pin_map_entry:
                 pad_alias_map[alias] = name
 
     used_pads = set()
@@ -117,7 +90,7 @@ def main():
     for pcf_constraint in parse_simple_pcf(args.pcf):
 
         # Skip non-io constraints
-        if type(pcf_constraint).__name__ != 'PcfIoConstraint':
+        if type(pcf_constraint).__name__ != "PcfIoConstraint":
             continue
 
         pad_name = pcf_constraint.pad
@@ -125,10 +98,9 @@ def main():
             print(
                 'PCF constraint "{}" from line {} constraints net {} \
                         which is not in available netlist:\n{}'.format(
-                    pcf_constraint.line_str, pcf_constraint.line_num,
-                    pcf_constraint.net, '\n'.join(io_place.get_nets())
+                    pcf_constraint.line_str, pcf_constraint.line_num, pcf_constraint.net, "\n".join(io_place.get_nets())
                 ),
-                file=sys.stderr
+                file=sys.stderr,
             )
             sys.exit(1)
 
@@ -136,10 +108,9 @@ def main():
             print(
                 'PCF constraint "{}" from line {} constraints pad {} \
                         which is not in available pad map:\n{}'.format(
-                    pcf_constraint.line_str, pcf_constraint.line_num, pad_name,
-                    '\n'.join(sorted(pad_map.keys()))
+                    pcf_constraint.line_str, pcf_constraint.line_num, pad_name, "\n".join(sorted(pad_map.keys()))
                 ),
-                file=sys.stderr
+                file=sys.stderr,
             )
             sys.exit(1)
 
@@ -154,15 +125,13 @@ def main():
                         which has already been constrained'.format(
                     pcf_constraint.line_str, pcf_constraint.line_num, pad_name
                 ),
-                file=sys.stderr
+                file=sys.stderr,
             )
             sys.exit(1)
         used_pads.add(pad_name)
 
         # Get the top-level block instance, strip its index
-        inst = io_place.get_top_level_block_instance_for_net(
-            pcf_constraint.net
-        )
+        inst = io_place.get_top_level_block_instance_for_net(pcf_constraint.net)
         if inst is None:
             continue
 
@@ -177,26 +146,24 @@ def main():
             print(
                 'PCF constraint "{}" from line {} constraints net {} of a block type {} \
                         to a location for block types:\n{}'.format(
-                    pcf_constraint.line_str, pcf_constraint.line_num,
-                    pcf_constraint.net, inst,
-                    '\n'.join(sorted(list(locs.keys())))
+                    pcf_constraint.line_str,
+                    pcf_constraint.line_num,
+                    pcf_constraint.net,
+                    inst,
+                    "\n".join(sorted(list(locs.keys()))),
                 ),
-                file=sys.stderr
+                file=sys.stderr,
             )
             sys.exit(1)
 
         # Constraint the net (block)
         loc = locs[inst]
-        io_place.constrain_net(
-            net_name=pcf_constraint.net,
-            loc=loc,
-            comment=pcf_constraint.line_str
-        )
+        io_place.constrain_net(net_name=pcf_constraint.net, loc=loc, comment=pcf_constraint.line_str)
 
     io_place.output_io_place(args.output)
 
 
 # =============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

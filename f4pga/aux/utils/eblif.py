@@ -46,15 +46,15 @@ def parse_blif(f):
     data = {}
 
     def add(d):
-        if d['type'] not in data:
-            data[d['type']] = []
-        data[d['type']].append(d)
+        if d["type"] not in data:
+            data[d["type"]] = []
+        data[d["type"]].append(d)
 
     current = None
     for oline in f:
         line = oline
-        if '#' in line:
-            line = line[:line.find('#')]
+        if "#" in line:
+            line = line[: line.find("#")]
         line = line.strip()
         if not line:
             continue
@@ -72,9 +72,9 @@ def parse_blif(f):
                 if current:
                     add(current)
                 current = {
-                    'type': ctype,
-                    'args': args[-1].split(),
-                    'data': [],
+                    "type": ctype,
+                    "args": args[-1].split(),
+                    "data": [],
                 }
             elif ctype in sub_level:
                 if ctype not in current:
@@ -84,13 +84,13 @@ def parse_blif(f):
             else:
                 current[ctype] = args[-1].split()
             continue
-        current['data'].append(line.strip().split())
+        current["data"].append(line.strip().split())
 
     if current:
         add(current)
 
-    assert len(data['inputs']) == 1
-    data['inputs'] = data['inputs'][0]
-    assert len(data['outputs']) == 1
-    data['outputs'] = data['outputs'][0]
+    assert len(data["inputs"]) == 1
+    data["inputs"] = data["inputs"][0]
+    assert len(data["outputs"]) == 1
+    data["outputs"] = data["outputs"][0]
     return data

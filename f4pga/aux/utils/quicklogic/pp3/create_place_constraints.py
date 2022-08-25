@@ -52,39 +52,21 @@ def get_cell_connection(cell, pin):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description='Creates placement constraints other than IOs'
-    )
+    parser = argparse.ArgumentParser(description="Creates placement constraints other than IOs")
 
     parser.add_argument(
-        "--input",
-        '-i',
-        "-I",
-        type=argparse.FileType('r'),
-        default=sys.stdin,
-        help='The input constraints place file.'
+        "--input", "-i", "-I", type=argparse.FileType("r"), default=sys.stdin, help="The input constraints place file."
     )
     parser.add_argument(
         "--output",
-        '-o',
+        "-o",
         "-O",
-        type=argparse.FileType('w'),
+        type=argparse.FileType("w"),
         default=sys.stdout,
-        help='The output constraints place file.'
+        help="The output constraints place file.",
     )
-    parser.add_argument(
-        "--map",
-        type=argparse.FileType('r'),
-        required=True,
-        help="Clock pinmap CSV file"
-    )
-    parser.add_argument(
-        "--blif",
-        '-b',
-        type=argparse.FileType('r'),
-        required=True,
-        help='BLIF / eBLIF file.'
-    )
+    parser.add_argument("--map", type=argparse.FileType("r"), required=True, help="Clock pinmap CSV file")
+    parser.add_argument("--blif", "-b", type=argparse.FileType("r"), required=True, help="BLIF / eBLIF file.")
 
     args = parser.parse_args()
 
@@ -173,19 +155,14 @@ def main():
             continue
 
         # Store data
-        clock_connections.append(
-            (inp_net, iob_cell, con_net, buf_cell, clk_net)
-        )
+        clock_connections.append((inp_net, iob_cell, con_net, buf_cell, clk_net))
 
     # Emit constraints for GCLK cells
     for inp_net, iob_cell, con_net, buf_cell, clk_net in clock_connections:
 
         src_loc = io_constraints[inp_net]
         if src_loc not in clock_to_gmux:
-            eprint(
-                "ERROR: No GMUX location for input CLOCK pad for net '{}' at {}"
-                .format(inp_net, src_loc)
-            )
+            eprint("ERROR: No GMUX location for input CLOCK pad for net '{}' at {}".format(inp_net, src_loc))
             continue
 
         dst_loc, name = clock_to_gmux[src_loc]
@@ -193,13 +170,11 @@ def main():
         # FIXME: Silently assuming here that VPR will name the GMUX block as
         # the GMUX cell in EBLIF. In order to fix that there will be a need
         # to read & parse the packed netlist file.
-        line = "{} {} {} {} # {}\n".format(
-            buf_cell["cname"][0], *dst_loc, name
-        )
+        line = "{} {} {} {} # {}\n".format(buf_cell["cname"][0], *dst_loc, name)
         args.output.write(line)
 
 
 # =============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

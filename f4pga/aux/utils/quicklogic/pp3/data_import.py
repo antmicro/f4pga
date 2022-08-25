@@ -30,9 +30,25 @@ import csv
 
 import lxml.etree as ET
 
-from f4pga.aux.utils.quicklogic.pp3.data_structs import Pin, PinDirection, Quadrant, ClockCell, Cell, CellType, \
-    Tile, TileType, Loc, SwitchboxPinLoc, SwitchboxPinType, Switchbox, SwitchboxPin, \
-    SwitchConnection, SwitchPin, PackagePin, OPPOSITE_DIRECTION
+from f4pga.aux.utils.quicklogic.pp3.data_structs import (
+    Pin,
+    PinDirection,
+    Quadrant,
+    ClockCell,
+    Cell,
+    CellType,
+    Tile,
+    TileType,
+    Loc,
+    SwitchboxPinLoc,
+    SwitchboxPinType,
+    Switchbox,
+    SwitchboxPin,
+    SwitchConnection,
+    SwitchPin,
+    PackagePin,
+    OPPOSITE_DIRECTION,
+)
 from f4pga.aux.utils.quicklogic.pp3.utils import yield_muxes, get_loc_of_cell, find_cell_in_tile, natural_keys
 from f4pga.aux.utils.quicklogic.pp3.connections import build_connections, check_connections
 from f4pga.aux.utils.quicklogic.pp3.connections import hop_to_str, get_name_and_hop, is_regular_hop_wire
@@ -43,8 +59,8 @@ from f4pga.aux.utils.quicklogic.pp3.connections import hop_to_str, get_name_and_
 # cells modeled as pb_types in VPR and are used to determine whether an input
 # pin should be of type "input"/"output" or "clock".
 CLOCK_PINS = {
-    "LOGIC": ("QCK", ),
-    "CLOCK": ("IC", ),
+    "LOGIC": ("QCK",),
+    "CLOCK": ("IC",),
     "GMUX": (
         "IP",
         "IC",
@@ -94,8 +110,7 @@ def parse_library(xml_library):
         cell_pins = []
 
         # Load pins
-        for xml_pins in itertools.chain(xml_node.findall("INPUT"),
-                                        xml_node.findall("OUTPUT")):
+        for xml_pins in itertools.chain(xml_node.findall("INPUT"), xml_node.findall("OUTPUT")):
 
             # Pin direction
             if xml_pins.tag == "INPUT":
@@ -129,9 +144,7 @@ def parse_library(xml_library):
                     for i in range(lsb, msb + 1, stp):
                         cell_pins.append(
                             Pin(
-                                name="{}[{}]".format(
-                                    xml_bus.attrib["name"], i
-                                ),
+                                name="{}[{}]".format(xml_bus.attrib["name"], i),
                                 direction=direction,
                                 attrib=port_attrib,
                             )
@@ -145,8 +158,7 @@ def parse_library(xml_library):
                     if cell_type == "CLOCK" and name == "OP":
                         continue
 
-                    if cell_type in CLOCK_PINS and \
-                       name in CLOCK_PINS[cell_type]:
+                    if cell_type in CLOCK_PINS and name in CLOCK_PINS[cell_type]:
                         port_attrib["clock"] = "true"
 
                     cell_pins.append(
@@ -202,9 +214,7 @@ def load_logic_cells(xml_placement, cellgrid, cells_library):
             cell_type = "LOGIC"
             assert cell_type in cells_library, cell_type
 
-            cellgrid[loc].append(
-                Cell(type=cell_type, index=None, name=cell_type, alias=None)
-            )
+            cellgrid[loc].append(Cell(type=cell_type, index=None, name=cell_type, alias=None))
 
 
 def load_other_cells(xml_placement, cellgrid, cells_library):
@@ -341,10 +351,7 @@ def parse_placement(xml_placement, cells_library):
         if type not in tile_types:
 
             cell_types = [c.type for c in cells]
-            cell_count = {
-                t: len([c for c in cells if c.type == t])
-                for t in cell_types
-            }
+            cell_count = {t: len([c for c in cells if c.type == t]) for t in cell_types}
 
             tile_type = TileType(type, cell_count)
             tile_type.make_pins(cells_library)
@@ -366,20 +373,9 @@ def parse_placement(xml_placement, cells_library):
             cell_list.sort(key=lambda c: natural_keys(c.name))
 
             for i, cell in enumerate(cell_list):
-                tile_cells.append(
-                    Cell(
-                        type=cell.type,
-                        index=i,
-                        name=cell.name,
-                        alias=cell.alias
-                    )
-                )
+                tile_cells.append(Cell(type=cell.type, index=i, name=cell.name, alias=cell.alias))
 
-        tilegrid[loc] = Tile(
-            type=type,
-            name="TILE_X{}Y{}".format(loc.x, loc.y),
-            cells=tile_cells
-        )
+        tilegrid[loc] = Tile(type=type, name="TILE_X{}Y{}".format(loc.x, loc.y), cells=tile_cells)
 
     return quadrants, tile_types, tilegrid
 
@@ -393,8 +389,7 @@ def populate_switchboxes(xml_sbox, switchbox_grid):
     ymin = int(xml_sbox.attrib["RowStartNum"])
     ymax = int(xml_sbox.attrib["RowEndNum"])
 
-    for y, x in itertools.product(range(ymin, ymax + 1), range(xmin,
-                                                               xmax + 1)):
+    for y, x in itertools.product(range(ymin, ymax + 1), range(xmin, xmax + 1)):
         loc = Loc(x, y, 0)
 
         assert loc not in switchbox_grid, loc
@@ -427,7 +422,7 @@ def update_switchbox_pins(switchbox):
                         switch_id=switch.id,
                         mux_id=mux.id,
                         pin_id=0,
-                        pin_direction=PinDirection.OUTPUT
+                        pin_direction=PinDirection.OUTPUT,
                     )
 
                     if stage.type == "STREET":
@@ -440,7 +435,7 @@ def update_switchbox_pins(switchbox):
                         name=mux.output.name,
                         direction=PinDirection.OUTPUT,
                         locs=[loc],
-                        type=pin_type
+                        type=pin_type,
                     )
 
                     assert pin.name not in switchbox.outputs, pin
@@ -455,7 +450,7 @@ def update_switchbox_pins(switchbox):
                             switch_id=switch.id,
                             mux_id=mux.id,
                             pin_id=pin.id,
-                            pin_direction=PinDirection.INPUT
+                            pin_direction=PinDirection.INPUT,
                         )
 
                         input_locs[pin.name].append(loc)
@@ -479,13 +474,7 @@ def update_switchbox_pins(switchbox):
         else:
             pin_type = SwitchboxPinType.LOCAL
 
-        pin = SwitchboxPin(
-            id=len(switchbox.inputs),
-            name=name,
-            direction=PinDirection.INPUT,
-            locs=locs,
-            type=pin_type
-        )
+        pin = SwitchboxPin(id=len(switchbox.inputs), name=name, direction=PinDirection.INPUT, locs=locs, type=pin_type)
 
         assert pin.name not in switchbox.inputs, pin
         switchbox.inputs[pin.name] = pin
@@ -512,9 +501,7 @@ def parse_switchbox(xml_sbox, xml_common=None):
 
         # Get stage id
         stage_id = int(xml_stage.attrib["StageNumber"])
-        assert stage_id not in switchbox.stages, (
-            stage_id, switchbox.stages.keys()
-        )
+        assert stage_id not in switchbox.stages, (stage_id, switchbox.stages.keys())
 
         stage_type = xml_stage.attrib["StageType"]
 
@@ -535,9 +522,7 @@ def parse_switchbox(xml_sbox, xml_common=None):
 
             # Add a new switch if needed
             if out_switch_id not in switches:
-                switches[out_switch_id] = Switchbox.Switch(
-                    out_switch_id, stage_id
-                )
+                switches[out_switch_id] = Switchbox.Switch(out_switch_id, stage_id)
             switch = switches[out_switch_id]
 
             # Add a mux for the output
@@ -546,9 +531,7 @@ def parse_switchbox(xml_sbox, xml_common=None):
             switch.muxes[mux.id] = mux
 
             # Add output pin to the mux
-            mux.output = SwitchPin(
-                id=0, name=out_pin_name, direction=PinDirection.OUTPUT
-            )
+            mux.output = SwitchPin(id=0, name=out_pin_name, direction=PinDirection.OUTPUT)
 
             # Process inputs
             for xml_input in xml_output:
@@ -563,18 +546,12 @@ def parse_switchbox(xml_sbox, xml_common=None):
 
                 # Append the actual wire length and hop diretion to names of
                 # pins that connect to HOP wires.
-                is_hop = (inp_hop_dir in ["Left", "Right", "Top", "Bottom"])
+                is_hop = inp_hop_dir in ["Left", "Right", "Top", "Bottom"]
                 if is_hop:
-                    inp_pin_name = "{}_{}{}".format(
-                        inp_pin_name, inp_hop_dir[0], inp_hop_len
-                    )
+                    inp_pin_name = "{}_{}{}".format(inp_pin_name, inp_hop_dir[0], inp_hop_len)
 
                 # Add the input to the mux
-                pin = SwitchPin(
-                    id=inp_pin_id,
-                    name=inp_pin_name,
-                    direction=PinDirection.INPUT
-                )
+                pin = SwitchPin(id=inp_pin_id, name=inp_pin_name, direction=PinDirection.INPUT)
 
                 assert pin.id not in mux.inputs, pin
                 mux.inputs[pin.id] = pin
@@ -591,14 +568,14 @@ def parse_switchbox(xml_sbox, xml_common=None):
                             switch_id=conn_switch_id,
                             mux_id=conn_pin_id,
                             pin_id=0,
-                            pin_direction=PinDirection.OUTPUT
+                            pin_direction=PinDirection.OUTPUT,
                         ),
                         dst=SwitchboxPinLoc(
                             stage_id=stage.id,
                             switch_id=switch.id,
                             mux_id=mux.id,
                             pin_id=inp_pin_id,
-                            pin_direction=PinDirection.INPUT
+                            pin_direction=PinDirection.INPUT,
                         ),
                     )
 
@@ -640,10 +617,8 @@ def parse_wire_mapping_table(xml_root, switchbox_grid, switchbox_types):
             row_beg = int(xml_row.attrib["RowStartNum"])
             row_end = int(xml_row.attrib["RowEndNum"])
 
-            assert row_beg == int(match.group(2)), \
-                (xml_row.tag, row_beg, row_end)
-            assert row_end == int(match.group(3)), \
-                (xml_row.tag, row_beg, row_end)
+            assert row_beg == int(match.group(2)), (xml_row.tag, row_beg, row_end)
+            assert row_end == int(match.group(3)), (xml_row.tag, row_beg, row_end)
 
             # Columns
             xml_cols = [e for e in xml_row if e.tag.startswith("Col_")]
@@ -656,10 +631,8 @@ def parse_wire_mapping_table(xml_root, switchbox_grid, switchbox_types):
                 col_beg = int(xml_col.attrib["ColStartNum"])
                 col_end = int(xml_col.attrib["ColEndNum"])
 
-                assert col_beg == int(match.group(2)), \
-                    (xml_col.tag, col_beg, col_end)
-                assert col_end == int(match.group(3)), \
-                    (xml_col.tag, col_beg, col_end)
+                assert col_beg == int(match.group(2)), (xml_col.tag, col_beg, col_end)
+                assert col_end == int(match.group(3)), (xml_col.tag, col_beg, col_end)
 
                 # Wire maps
                 xml_maps = [e for e in xml_col if e.tag.startswith("Stage_")]
@@ -674,9 +647,7 @@ def parse_wire_mapping_table(xml_root, switchbox_grid, switchbox_types):
 
     RE_STAGE = re.compile(r"^Stage_([0-9])$")
     RE_JOINT = re.compile(r"^Join\.([0-9]+)\.([0-9]+)\.([0-9]+)$")
-    RE_WIREMAP = re.compile(
-        r"^WireMap\.(Top|Bottom|Left|Right)\.Length_([0-9])\.(.*)$"
-    )
+    RE_WIREMAP = re.compile(r"^WireMap\.(Top|Bottom|Left|Right)\.Length_([0-9])\.(.*)$")
 
     for loc, xml_maps in yield_locs_and_maps():
         for xml_map in xml_maps:
@@ -686,15 +657,10 @@ def parse_wire_mapping_table(xml_root, switchbox_grid, switchbox_types):
             assert match is not None, xml_map.tag
 
             stage_id = int(xml_map.attrib["StageNumber"])
-            assert stage_id == int(match.group(1)), \
-                (xml_map.tag, stage_id)
+            assert stage_id == int(match.group(1)), (xml_map.tag, stage_id)
 
             # Decode wire joints
-            joints = {
-                k: v
-                for k, v in xml_map.attrib.items()
-                if k.startswith("Join.")
-            }
+            joints = {k: v for k, v in xml_map.attrib.items() if k.startswith("Join.")}
             for joint_key, joint_map in joints.items():
 
                 # Decode the joint key
@@ -706,8 +672,7 @@ def parse_wire_mapping_table(xml_root, switchbox_grid, switchbox_types):
                     switch_id=int(match.group(1)),
                     mux_id=int(match.group(2)),
                     pin_id=int(match.group(3)),
-                    pin_direction=PinDirection.
-                    INPUT  # FIXME: Are those always inputs ?
+                    pin_direction=PinDirection.INPUT,  # FIXME: Are those always inputs ?
                 )
 
                 # Decode the wire name
@@ -754,18 +719,10 @@ def parse_port_mapping_table(xml_root, switchbox_grid):
         # Get switchbox types affected by the mapping
         sbox_types_xml = xml_table.find("SBoxTypes")
         assert sbox_types_xml is not None
-        switchbox_types = set(
-            [
-                v for k, v in sbox_types_xml.attrib.items()
-                if k.startswith("type")
-            ]
-        )
+        switchbox_types = set([v for k, v in sbox_types_xml.attrib.items() if k.startswith("type")])
 
         # Get their locations
-        locs = [
-            loc for loc, type in switchbox_grid.items()
-            if type in switchbox_types
-        ]
+        locs = [loc for loc, type in switchbox_grid.items() if type in switchbox_types]
 
         # Get the first occurrence of a switchbox with one of considered types
         # that is closes to the (0, 0) according to manhattan distance.
@@ -794,7 +751,7 @@ def parse_port_mapping_table(xml_root, switchbox_grid):
                 output_num = index_xml.attrib["SwitchOutputNum"]
 
                 # Skip this index - empty switchbox
-                if (pin_name == "-1"):
+                if pin_name == "-1":
                     continue
 
                 # Determine the mapped port direction
@@ -814,11 +771,7 @@ def parse_port_mapping_table(xml_root, switchbox_grid):
                         mapped_name = None
 
                     # Get the location for the map
-                    loc = Loc(
-                        x=base_loc.x + dx * offset,
-                        y=base_loc.y + dy * offset,
-                        z=0
-                    )
+                    loc = Loc(x=base_loc.x + dx * offset, y=base_loc.y + dy * offset, z=0)
 
                     # Append mapping
                     key = (pin_name, pin_direction)
@@ -846,26 +799,14 @@ def parse_clock_network(xml_clock_network):
         """
         NON_PIN_TAGS = ("name", "type", "row", "column")
 
-        cell_loc = Loc(
-            x=int(xml_cell.attrib["column"]),
-            y=int(xml_cell.attrib["row"]),
-            z=0
-        )
+        cell_loc = Loc(x=int(xml_cell.attrib["column"]), y=int(xml_cell.attrib["row"]), z=0)
 
         # Get the cell's pinmap
-        pin_map = {
-            k: v
-            for k, v in xml_cell.attrib.items()
-            if k not in NON_PIN_TAGS
-        }
+        pin_map = {k: v for k, v in xml_cell.attrib.items() if k not in NON_PIN_TAGS}
 
         # Return the cell
         return ClockCell(
-            type=xml_cell.attrib["type"],
-            name=xml_cell.attrib["name"],
-            loc=cell_loc,
-            quadrant=quadrant,
-            pin_map=pin_map
+            type=xml_cell.attrib["type"], name=xml_cell.attrib["name"], loc=cell_loc, quadrant=quadrant, pin_map=pin_map
         )
 
     clock_cells = {}
@@ -908,19 +849,13 @@ def parse_clock_network(xml_clock_network):
             del pin_map["EN"]
 
         clock_cells[cell_name] = ClockCell(
-            name=cell.name,
-            type=cell.type,
-            loc=cell.loc,
-            quadrant=cell.quadrant,
-            pin_map=pin_map
+            name=cell.name, type=cell.type, loc=cell.loc, quadrant=cell.quadrant, pin_map=pin_map
         )
 
     return clock_cells
 
 
-def populate_clk_mux_port_maps(
-        port_maps, clock_cells, tile_grid, cells_library
-):
+def populate_clk_mux_port_maps(port_maps, clock_cells, tile_grid, cells_library):
     """
     Converts global clock network cells port mappings and appends them to
     the port_maps used later for switchbox specialization.
@@ -958,17 +893,13 @@ def populate_clk_mux_port_maps(
             key = (sbox_pin_name, OPPOSITE_DIRECTION[cell_pin.direction])
 
             assert key not in port_maps[loc], (port_maps[loc], key)
-            port_maps[loc][key] = "{}{}_{}".format(
-                cell.type, cell.index, mux_pin_name
-            )
+            port_maps[loc][key] = "{}{}_{}".format(cell.type, cell.index, mux_pin_name)
 
 
 # =============================================================================
 
 
-def specialize_switchboxes_with_port_maps(
-        switchbox_types, switchbox_grid, port_maps
-):
+def specialize_switchboxes_with_port_maps(switchbox_types, switchbox_grid, port_maps):
     """
     Specializes switchboxes by applying port mapping.
     """
@@ -1036,9 +967,7 @@ def specialize_switchboxes_with_port_maps(
         switchbox_grid[loc] = new_switchbox.type
 
 
-def specialize_switchboxes_with_wire_maps(
-        switchbox_types, switchbox_grid, port_maps, wire_maps
-):
+def specialize_switchboxes_with_wire_maps(switchbox_types, switchbox_grid, port_maps, wire_maps):
     """
     Specializes switchboxes by applying wire mapping.
     """
@@ -1092,9 +1021,7 @@ def specialize_switchboxes_with_wire_maps(
             mux = switch.muxes[pin_loc.mux_id]
             pin = mux.inputs[pin_loc.pin_id]
 
-            new_pin = SwitchPin(
-                id=pin.id, direction=pin.direction, name=pin_name
-            )
+            new_pin = SwitchPin(id=pin.id, direction=pin.direction, name=pin_name)
 
             mux.inputs[new_pin.id] = new_pin
             did_remap = True
@@ -1123,7 +1050,7 @@ def find_special_cells(tile_grid):
     # Assign each cell name its locations.
     for loc, tile in tile_grid.items():
         for cell_type, cell_names in tile.cell_names.items():
-            for cell_name, in cell_names:
+            for (cell_name,) in cell_names:
 
                 # Skip LOGIC as it is always contained in a single tile
                 if cell_name == "LOGIC":
@@ -1176,10 +1103,7 @@ def parse_pinmap(xml_root, tile_grid):
 
             # Location not found
             if not cell_locs:
-                print(
-                    "WARNING: No locs for package pin '{}' of package '{}'".
-                    format(pin_name, pkg_name)
-                )
+                print("WARNING: No locs for package pin '{}' of package '{}'".format(pin_name, pkg_name))
                 continue
 
             # Add the pin mapping
@@ -1187,31 +1111,21 @@ def parse_pinmap(xml_root, tile_grid):
 
                 # Find the cell
                 if cell_loc not in tile_grid:
-                    print(
-                        "WARNING: No tile for package pin '{}' at '{}'".format(
-                            pin_name, cell_loc
-                        )
-                    )
+                    print("WARNING: No tile for package pin '{}' at '{}'".format(pin_name, cell_loc))
                     continue
                 tile = tile_grid[cell_loc]
 
                 cell = find_cell_in_tile(cell_name, tile)
                 if cell is None:
                     print(
-                        "WARNING: No cell in tile '{}' for package pin '{}' at '{}'"
-                        .format(tile.name, pin_name, cell_loc)
+                        "WARNING: No cell in tile '{}' for package pin '{}' at '{}'".format(
+                            tile.name, pin_name, cell_loc
+                        )
                     )
                     continue
 
                 # Store the mapping
-                pkg_pin_map[pin_name].add(
-                    PackagePin(
-                        name=pin_name,
-                        alias=pin_alias,
-                        loc=cell_loc,
-                        cell=cell
-                    )
-                )
+                pkg_pin_map[pin_name].add(PackagePin(name=pin_name, alias=pin_alias, loc=cell_loc, cell=cell))
 
                 # Check if there is a CLOCK cell at the same location
                 cells = [c for c in tile.cells if c.type == "CLOCK"]
@@ -1219,14 +1133,7 @@ def parse_pinmap(xml_root, tile_grid):
                     assert len(cells) == 1, cells
 
                     # Store the mapping for the CLOCK cell
-                    pkg_pin_map[pin_name].add(
-                        PackagePin(
-                            name=pin_name,
-                            alias=pin_alias,
-                            loc=cell_loc,
-                            cell=cells[0]
-                        )
-                    )
+                    pkg_pin_map[pin_name].add(PackagePin(name=pin_name, alias=pin_alias, loc=cell_loc, cell=cells[0]))
 
             # Convert to list
             pkg_pin_map[pin_name] = list(pkg_pin_map[pin_name])
@@ -1258,9 +1165,7 @@ def import_data(xml_root):
     assert xml_placement is not None
 
     cells_library = {cell.type: cell for cell in cells}
-    quadrants, tile_types, tile_grid = parse_placement(
-        xml_placement, cells_library
-    )
+    quadrants, tile_types, tile_grid = parse_placement(xml_placement, cells_library)
 
     # Import global clock network definition
     xml_clock_network = xml_placement.find("CLOCK_NETWORK")
@@ -1300,9 +1205,7 @@ def import_data(xml_root):
 
     if xml_wiremap is not None:
         # Import wire mapping
-        wire_maps = parse_wire_mapping_table(
-            xml_wiremap, switchbox_grid, switchbox_types
-        )
+        wire_maps = parse_wire_mapping_table(xml_wiremap, switchbox_grid, switchbox_types)
 
     # Get the "DevicePortMappingTable" section
     xml_portmap = xml_routing.find("DevicePortMappingTable")
@@ -1312,20 +1215,14 @@ def import_data(xml_root):
     port_maps = parse_port_mapping_table(xml_portmap, switchbox_grid)
 
     # Supply port mapping table with global clock mux map
-    populate_clk_mux_port_maps(
-        port_maps, clock_cells, tile_grid, cells_library
-    )
+    populate_clk_mux_port_maps(port_maps, clock_cells, tile_grid, cells_library)
 
     if xml_wiremap is not None:
         # Specialize switchboxes with wire maps
-        specialize_switchboxes_with_wire_maps(
-            switchbox_types, switchbox_grid, port_maps, wire_maps
-        )
+        specialize_switchboxes_with_wire_maps(switchbox_types, switchbox_grid, port_maps, wire_maps)
 
     # Specialize switchboxes with local port maps
-    specialize_switchboxes_with_port_maps(
-        switchbox_types, switchbox_grid, port_maps
-    )
+    specialize_switchboxes_with_port_maps(switchbox_types, switchbox_grid, port_maps)
 
     # Remove switchbox types not present in the grid anymore due to their
     # specialization.
@@ -1348,7 +1245,7 @@ def import_data(xml_root):
         "switchbox_types": switchbox_types,
         "switchbox_grid": switchbox_grid,
         "clock_cells": clock_cells,
-        "package_pinmaps": package_pinmaps
+        "package_pinmaps": package_pinmaps,
     }
 
 
@@ -1439,28 +1336,12 @@ def import_routing_timing(csv_file):
 def main():
 
     # Parse arguments
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 
+    parser.add_argument("--techfile", type=str, required=True, help="Quicklogic 'TechFile' XML file")
+    parser.add_argument("--routing-timing", type=str, default=None, help="Quicklogic routing delay CSV file")
     parser.add_argument(
-        "--techfile",
-        type=str,
-        required=True,
-        help="Quicklogic 'TechFile' XML file"
-    )
-    parser.add_argument(
-        "--routing-timing",
-        type=str,
-        default=None,
-        help="Quicklogic routing delay CSV file"
-    )
-    parser.add_argument(
-        "--db",
-        type=str,
-        default="phy_database.pickle",
-        help="Device name for the parsed 'database' file"
+        "--db", type=str, default="phy_database.pickle", help="Device name for the parsed 'database' file"
     )
 
     args = parser.parse_args()
@@ -1499,7 +1380,7 @@ def main():
         "switchbox_types": data["switchbox_types"],
         "switchbox_grid": data["switchbox_grid"],
         "connections": connections,
-        "package_pinmaps": data["package_pinmaps"]
+        "package_pinmaps": data["package_pinmaps"],
     }
 
     if switchbox_timing is not None:

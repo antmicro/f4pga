@@ -55,8 +55,7 @@ def absorb_buffer_luts(netlist, outputs=False):
 
             # Must not be driving any top-level outputs unless explicitly
             # allowed
-            if (net_inp in netlist.inputs
-                    or net_out in netlist.outputs) and not outputs:
+            if (net_inp in netlist.inputs or net_out in netlist.outputs) and not outputs:
                 return False
 
             return True
@@ -64,11 +63,7 @@ def absorb_buffer_luts(netlist, outputs=False):
         return False
 
     # Identify LUT buffers
-    buffers = {
-        key: cell
-        for key, cell in netlist.cells.items()
-        if is_buffer_lut(cell)
-    }
+    buffers = {key: cell for key, cell in netlist.cells.items() if is_buffer_lut(cell)}
 
     # Merge them downstream
     net_map = {}

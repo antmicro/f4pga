@@ -73,16 +73,11 @@ def parse_options(lines, opts=None):
             exit(-1)
 
         # Remove the comment
-        opt_string = opt_string[:p0] + opt_string[p1 + 2:]
+        opt_string = opt_string[:p0] + opt_string[p1 + 2 :]
 
     # Initialize options if not given
     if opts is None:
-        opts = {
-            "incdir": set(),
-            "libdir": set(),
-            "libext": set(),
-            "defines": {}
-        }
+        opts = {"incdir": set(), "libdir": set(), "libext": set(), "defines": {}}
 
     # Scan and process options
     parts = iter(shlex.split(opt_string))
@@ -170,7 +165,7 @@ def quote(s):
     Quotes a string if it needs it
     """
     if " " in s:
-        return "\"" + s + "\""
+        return '"' + s + '"'
     else:
         return s
 

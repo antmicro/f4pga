@@ -29,12 +29,13 @@ from repack import main as repack_main  # noqa: E402
 
 
 @pytest.mark.parametrize(
-    "lut_width, lut_inputs", [
+    "lut_width, lut_inputs",
+    [
         ("1", "0"),
         ("1", "1"),
         ("1", "2"),
         ("1", "3"),
-    ]
+    ],
 )
 def test_lut_padding(monkeypatch, lut_width, lut_inputs):
     """
@@ -45,24 +46,15 @@ def test_lut_padding(monkeypatch, lut_width, lut_inputs):
     basedir = os.path.dirname(__file__)
 
     qlfpga_plugins = os.path.join(
-        basedir, "..", "..", "..", "..", "..", "..", "build", "quicklogic",
-        "third_party", "qlfpga-symbiflow-plugins"
+        basedir, "..", "..", "..", "..", "..", "..", "build", "quicklogic", "third_party", "qlfpga-symbiflow-plugins"
     )
 
-    vpr_arch = os.path.join(
-        qlfpga_plugins, "qlf_k4n8/slow/vpr_arch/UMC22nm_vpr.xml"
-    )
-    repacking_rules = os.path.join(
-        qlfpga_plugins, "qlf_k4n8/repacking_rules.json"
-    )
+    vpr_arch = os.path.join(qlfpga_plugins, "qlf_k4n8/slow/vpr_arch/UMC22nm_vpr.xml")
+    repacking_rules = os.path.join(qlfpga_plugins, "qlf_k4n8/repacking_rules.json")
 
-    eblif_ref = os.path.join(
-        basedir, "lut{}_{}.golden.eblif".format(lut_width, lut_inputs)
-    )
+    eblif_ref = os.path.join(basedir, "lut{}_{}.golden.eblif".format(lut_width, lut_inputs))
     eblif_in = os.path.join(basedir, "lut{}.eblif".format(lut_width))
-    net_in = os.path.join(
-        basedir, "lut{}_{}.net".format(lut_width, lut_inputs)
-    )
+    net_in = os.path.join(basedir, "lut{}_{}.net".format(lut_width, lut_inputs))
 
     with tempfile.TemporaryDirectory() as tempdir:
 
@@ -71,7 +63,8 @@ def test_lut_padding(monkeypatch, lut_width, lut_inputs):
 
         # Substitute commandline arguments
         monkeypatch.setattr(
-            "sys.argv", [
+            "sys.argv",
+            [
                 "repack.py",
                 "--vpr-arch",
                 vpr_arch,
@@ -85,7 +78,7 @@ def test_lut_padding(monkeypatch, lut_width, lut_inputs):
                 eblif_out,
                 "--net-out",
                 net_out,
-            ]
+            ],
         )
 
         # Invoke the repacker

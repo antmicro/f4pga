@@ -89,8 +89,7 @@ class SwitchboxConfigBuilder:
             if stage.type not in self.nodes:
                 self.nodes[stage.type] = {}
 
-            assert node.key not in self.nodes[stage.type
-                                              ], (stage.type, node.key)
+            assert node.key not in self.nodes[stage.type], (stage.type, node.key)
             self.nodes[stage.type][node.key] = node
 
         # Create all source and sink nodes, populate their connections with mux
@@ -141,20 +140,13 @@ class SwitchboxConfigBuilder:
                     assert key in nodes, key
                     node = nodes[key]
 
-                    key = (
-                        self.switchbox.type, pin_loc.stage_id,
-                        pin_loc.switch_id, pin_loc.mux_id
-                    )
-                    if (key in duplicate  # Mux has multiple inputs selected
-                            and (pin_loc.pin_id in duplicate[key]
-                                 )  # Current selection is duplicate
-                            and not (key[0].startswith("SB_TOP_IFC"))
-                        ):  # Ignore TOP switchboxes
-                        print(
-                            "Warning: duplicate: {} - {}".format(
-                                key, pin_loc.pin_id
-                            )
-                        )
+                    key = (self.switchbox.type, pin_loc.stage_id, pin_loc.switch_id, pin_loc.mux_id)
+                    if (
+                        key in duplicate  # Mux has multiple inputs selected
+                        and (pin_loc.pin_id in duplicate[key])  # Current selection is duplicate
+                        and not (key[0].startswith("SB_TOP_IFC"))
+                    ):  # Ignore TOP switchboxes
+                        print("Warning: duplicate: {} - {}".format(key, pin_loc.pin_id))
                         continue
 
                     # Append reference to the input pin to the node
@@ -316,8 +308,7 @@ class SwitchboxConfigBuilder:
 
                     # Get FASM features using the switchbox model.
                     features = SwitchboxModel.get_metadata_for_mux(
-                        loc, self.switchbox.stages[stage_id], switch_id,
-                        mux_id, node.sel
+                        loc, self.switchbox.stages[stage_id], switch_id, mux_id, node.sel
                     )
                     lines.extend(features)
 
@@ -369,8 +360,8 @@ class SwitchboxConfigBuilder:
 
         # Add header
         dot.append("digraph {} {{".format(self.switchbox.type))
-        dot.append("  graph [nodesep=\"1.0\", ranksep=\"20\"];")
-        dot.append("  splines = \"false\";")
+        dot.append('  graph [nodesep="1.0", ranksep="20"];')
+        dot.append('  splines = "false";')
         dot.append("  rankdir = LR;")
         dot.append("  margin = 20;")
         dot.append("  node [style=filled];")
@@ -379,7 +370,7 @@ class SwitchboxConfigBuilder:
         for stage_type, nodes in self.nodes.items():
 
             # Stage header
-            dot.append("  subgraph \"cluster_{}\" {{".format(stage_type))
+            dot.append('  subgraph "cluster_{}" {{'.format(stage_type))
             dot.append("    label=\"Stage '{}'\";".format(stage_type))
 
             # Nodes and internal mux edges
@@ -392,8 +383,7 @@ class SwitchboxConfigBuilder:
                     color = node_colors[node.net]
 
                     dot.append(
-                        "  \"{}\" [shape=octagon label=\"{}\" fillcolor=\"{}\"];"
-                        .format(
+                        '  "{}" [shape=octagon label="{}" fillcolor="{}"];'.format(
                             name,
                             label,
                             color,
@@ -407,8 +397,7 @@ class SwitchboxConfigBuilder:
                     color = node_colors[node.net]
 
                     dot.append(
-                        "  \"{}\" [shape=octagon label=\"{}\" fillcolor=\"{}\"];"
-                        .format(
+                        '  "{}" [shape=octagon label="{}" fillcolor="{}"];'.format(
                             name,
                             label,
                             color,
@@ -418,12 +407,8 @@ class SwitchboxConfigBuilder:
                 # Mux node
                 elif node.type == self.NodeType.MUX:
                     name = "{}_{}".format(stage_type, key2str(key))
-                    dot.append("    subgraph \"cluster_{}\" {{".format(name))
-                    dot.append(
-                        "      label=\"{}, sel={}\";".format(
-                            str(key), node.sel
-                        )
-                    )
+                    dot.append('    subgraph "cluster_{}" {{'.format(name))
+                    dot.append('      label="{}, sel={}";'.format(str(key), node.sel))
 
                     # Inputs
                     for drv_key, pin in node.inp.items():
@@ -438,8 +423,7 @@ class SwitchboxConfigBuilder:
                         color = node_colors[net]
 
                         dot.append(
-                            "      \"{}\" [shape=ellipse label=\"{}\" fillcolor=\"{}\"];"
-                            .format(
+                            '      "{}" [shape=ellipse label="{}" fillcolor="{}"];'.format(
                                 name,
                                 label,
                                 color,
@@ -452,8 +436,7 @@ class SwitchboxConfigBuilder:
                     color = node_colors[node.net]
 
                     dot.append(
-                        "      \"{}\" [shape=ellipse label=\"{}\" fillcolor=\"{}\"];"
-                        .format(
+                        '      "{}" [shape=ellipse label="{}" fillcolor="{}"];'.format(
                             name,
                             label,
                             color,
@@ -468,14 +451,12 @@ class SwitchboxConfigBuilder:
                         else:
                             net = None
 
-                        src_name = "{}_{}_{}".format(
-                            stage_type, key2str(key), pin
-                        )
+                        src_name = "{}_{}_{}".format(stage_type, key2str(key), pin)
                         dst_name = "{}_{}".format(stage_type, key2str(key))
                         color = edge_colors[net]
 
                         dot.append(
-                            "      \"{}\" -> \"{}\" [color=\"{}\"];".format(
+                            '      "{}" -> "{}" [color="{}"];'.format(
                                 src_name,
                                 dst_name,
                                 color,
@@ -501,16 +482,14 @@ class SwitchboxConfigBuilder:
 
                     dst_name = "{}_out_{}".format(stage_type, key2str(key))
                     if isinstance(src_key, str):
-                        src_name = "{}_inp_{}".format(
-                            stage_type, key2str(src_key)
-                        )
+                        src_name = "{}_inp_{}".format(stage_type, key2str(src_key))
                     else:
                         src_name = "{}_{}".format(stage_type, key2str(src_key))
 
                     color = node_colors[node.net]
 
                     dot.append(
-                        "    \"{}\" -> \"{}\" [color=\"{}\"];".format(
+                        '    "{}" -> "{}" [color="{}"];'.format(
                             src_name,
                             dst_name,
                             color,
@@ -526,22 +505,16 @@ class SwitchboxConfigBuilder:
                         else:
                             net = None
 
-                        dst_name = "{}_{}_{}".format(
-                            stage_type, key2str(key), pin
-                        )
+                        dst_name = "{}_{}_{}".format(stage_type, key2str(key), pin)
                         if isinstance(drv_key, str):
-                            src_name = "{}_inp_{}".format(
-                                stage_type, key2str(drv_key)
-                            )
+                            src_name = "{}_inp_{}".format(stage_type, key2str(drv_key))
                         else:
-                            src_name = "{}_{}".format(
-                                stage_type, key2str(drv_key)
-                            )
+                            src_name = "{}_{}".format(stage_type, key2str(drv_key))
 
                         color = edge_colors[net]
 
                         dot.append(
-                            "    \"{}\" -> \"{}\" [color=\"{}\"];".format(
+                            '    "{}" -> "{}" [color="{}"];'.format(
                                 src_name,
                                 dst_name,
                                 color,
@@ -565,40 +538,17 @@ class SwitchboxConfigBuilder:
 def main():
 
     # Parse arguments
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 
+    parser.add_argument("--techfile", type=str, required=True, help="Quicklogic 'TechFile' XML file")
+    parser.add_argument("--fasm", type=str, default="default.fasm", help="Output FASM file name")
     parser.add_argument(
-        "--techfile",
-        type=str,
-        required=True,
-        help="Quicklogic 'TechFile' XML file"
+        "--device", type=str, choices=["eos-s3"], default="eos-s3", help="Device name to generate the FASM file for"
     )
     parser.add_argument(
-        "--fasm",
-        type=str,
-        default="default.fasm",
-        help="Output FASM file name"
+        "--dump-dot", action="store_true", help="Dump Graphviz .dot files for each routed switchbox type"
     )
-    parser.add_argument(
-        "--device",
-        type=str,
-        choices=["eos-s3"],
-        default="eos-s3",
-        help="Device name to generate the FASM file for"
-    )
-    parser.add_argument(
-        "--dump-dot",
-        action="store_true",
-        help="Dump Graphviz .dot files for each routed switchbox type"
-    )
-    parser.add_argument(
-        "--allow-routing-failures",
-        action="store_true",
-        help="Skip switchboxes that fail routing"
-    )
+    parser.add_argument("--allow-routing-failures", action="store_true", help="Skip switchboxes that fail routing")
 
     args = parser.parse_args()
 
@@ -644,11 +594,8 @@ def main():
         for pin in switchbox.pins:
             pinmap = {}
             for pin_loc in pin.locs:
-                key = (
-                    switchbox.type, pin_loc.stage_id, pin_loc.switch_id,
-                    pin_loc.mux_id
-                )
-                if (key not in pinmap):
+                key = (switchbox.type, pin_loc.stage_id, pin_loc.switch_id, pin_loc.mux_id)
+                if key not in pinmap:
                     pinmap[key] = pin_loc.pin_id
                 else:
                     if key in duplicate:
@@ -661,10 +608,7 @@ def main():
         print("", switchbox.type)
 
         # Identify all locations of the switchbox
-        locs = [
-            loc for loc, type in switchbox_grid.items()
-            if type == switchbox.type
-        ]
+        locs = [loc for loc, type in switchbox_grid.items() if type == switchbox.type]
 
         # Initialize the builder
         builder = SwitchboxConfigBuilder(switchbox)
@@ -716,9 +660,7 @@ def main():
         # If this tile has a LOGIC cell then emit the FASM feature that
         # enables its power
         if "LOGIC" in tile_type.cells:
-            feature = "X{}Y{}.LOGIC.LOGIC.Ipwr_gates.J_pwr_st".format(
-                loc.x, loc.y
-            )
+            feature = "X{}Y{}.LOGIC.LOGIC.Ipwr_gates.J_pwr_st".format(loc.x, loc.y)
             fasm.append(feature)
 
     # Write FASM

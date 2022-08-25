@@ -21,9 +21,9 @@ from collections import namedtuple, defaultdict
 
 from f4pga.aux.utils.quicklogic.pp3.data_structs import PinDirection
 
-Element = namedtuple('Element', 'loc type name ios')
-Wire = namedtuple('Wire', 'srcloc name inverted')
-VerilogIO = namedtuple('VerilogIO', 'name direction ioloc')
+Element = namedtuple("Element", "loc type name ios")
+Wire = namedtuple("Wire", "srcloc name inverted")
+VerilogIO = namedtuple("VerilogIO", "name direction ioloc")
 
 
 def loc2str(loc):
@@ -31,27 +31,27 @@ def loc2str(loc):
 
 
 class VModule(object):
-    '''Represents a Verilog module for QLAL4S3B FASM'''
+    """Represents a Verilog module for QLAL4S3B FASM"""
 
     def __init__(
-            self,
-            vpr_tile_grid,
-            vpr_tile_types,
-            cells_library,
-            pcf_data,
-            belinversions,
-            interfaces,
-            designconnections,
-            org_loc_map,
-            cand_map,
-            inversionpins,
-            io_to_fbio,
-            useinversionpins=True
+        self,
+        vpr_tile_grid,
+        vpr_tile_types,
+        cells_library,
+        pcf_data,
+        belinversions,
+        interfaces,
+        designconnections,
+        org_loc_map,
+        cand_map,
+        inversionpins,
+        io_to_fbio,
+        useinversionpins=True,
     ):
-        '''Prepares initial structures.
+        """Prepares initial structures.
 
         Refer to fasm2bels.py for input description.
-        '''
+        """
 
         self.vpr_tile_grid = vpr_tile_grid
         self.vpr_tile_types = vpr_tile_types
@@ -81,15 +81,15 @@ class VModule(object):
         self.last_output_id = 0
 
         self.qlal4s3bmapping = {
-            'LOGIC': 'logic_cell_macro',
-            'ASSP': 'qlal4s3b_cell_macro',
-            'BIDIR': 'gpio_cell_macro',
-            'RAM': 'ram8k_2x1_cell_macro',
-            'MULT': 'qlal4s3_mult_cell_macro',
-            'GMUX': 'gclkbuff',
-            'QMUX': 'qhsckbuff',
-            'CLOCK': 'ckpad',
-            'inv': 'inv'
+            "LOGIC": "logic_cell_macro",
+            "ASSP": "qlal4s3b_cell_macro",
+            "BIDIR": "gpio_cell_macro",
+            "RAM": "ram8k_2x1_cell_macro",
+            "MULT": "qlal4s3_mult_cell_macro",
+            "GMUX": "gclkbuff",
+            "QMUX": "qhsckbuff",
+            "CLOCK": "ckpad",
+            "inv": "inv",
         }
 
         self.qlal4s3_pinmap = {
@@ -101,10 +101,7 @@ class VModule(object):
                 "IC": "A",
                 "IZ": "Z",
             },
-            "qhsckbuff": {
-                "HSCKIN": "A",
-                "IZ": "Z"
-            },
+            "qhsckbuff": {"HSCKIN": "A", "IZ": "Z"},
         }
 
     def group_vector_signals(self, signals, io=False):
@@ -115,34 +112,32 @@ class VModule(object):
             orig_ios = signals
             ios = dict()
             for s in signals:
-                id = Wire(s.name, 'io', False)
+                id = Wire(s.name, "io", False)
                 ios[id] = s.name
             signals = ios
 
         vectors = dict()
         new_signals = dict()
 
-        array = re.compile(
-            r'(?P<varname>[a-zA-Z_][a-zA-Z_0-9$]+)\[(?P<arrindex>[0-9]+)\]'
-        )
+        array = re.compile(r"(?P<varname>[a-zA-Z_][a-zA-Z_0-9$]+)\[(?P<arrindex>[0-9]+)\]")
 
         # first find the vectors
         for signalid in signals:
             match = array.match(signals[signalid])
             if match:
-                varname = match.group('varname')
-                arrayindex = int(match.group('arrindex'))
+                varname = match.group("varname")
+                arrayindex = int(match.group("arrindex"))
 
                 if varname not in vectors:
                     vectors[varname] = dict()
-                    vectors[varname]['max'] = 0
-                    vectors[varname]['min'] = 0
+                    vectors[varname]["max"] = 0
+                    vectors[varname]["min"] = 0
 
-                if arrayindex > vectors[varname]['max']:
-                    vectors[varname]['max'] = arrayindex
+                if arrayindex > vectors[varname]["max"]:
+                    vectors[varname]["max"] = arrayindex
 
-                if arrayindex < vectors[varname]['min']:
-                    vectors[varname]['min'] = arrayindex
+                if arrayindex < vectors[varname]["min"]:
+                    vectors[varname]["min"] = arrayindex
 
             # if signal is not a part of a vector leave it
             else:
@@ -150,10 +145,8 @@ class VModule(object):
 
         # add vectors to signals dict
         for vec in vectors:
-            name = '[{max}:{min}] {name}'.format(
-                max=vectors[vec]['max'], min=vectors[vec]['min'], name=vec
-            )
-            id = Wire(name, 'vector', False)
+            name = "[{max}:{min}] {name}".format(max=vectors[vec]["max"], min=vectors[vec]["min"], name=vec)
+            id = Wire(name, "vector", False)
             new_signals[id] = name
 
         if io:
@@ -162,11 +155,7 @@ class VModule(object):
             for s in new_signals:
                 signalname = new_signals[s].split()
                 signalname = signalname[-1]
-                io = [
-                    x.direction
-                    for x in orig_ios
-                    if x.name.startswith(signalname)
-                ]
+                io = [x.direction for x in orig_ios if x.name.startswith(signalname)]
                 direction = io[0]
                 new_ios.append((direction, new_signals[s]))
             return new_ios
@@ -174,7 +163,7 @@ class VModule(object):
             return new_signals
 
     def group_array_values(self, parameters: dict):
-        '''Groups pin names that represent array indices.
+        """Groups pin names that represent array indices.
 
         Parameters
         ----------
@@ -184,16 +173,14 @@ class VModule(object):
         Returns
         -------
         dict: parameters with grouped array indices
-        '''
+        """
         newparameters = dict()
-        arraydst = re.compile(
-            r'(?P<varname>[a-zA-Z_][a-zA-Z_0-9$]+)\[(?P<arrindex>[0-9]+)\]'
-        )
+        arraydst = re.compile(r"(?P<varname>[a-zA-Z_][a-zA-Z_0-9$]+)\[(?P<arrindex>[0-9]+)\]")
         for dst, src in parameters.items():
             match = arraydst.match(dst)
             if match:
-                varname = match.group('varname')
-                arrindex = int(match.group('arrindex'))
+                varname = match.group("varname")
+                arrindex = int(match.group("arrindex"))
                 if varname not in newparameters:
                     newparameters[varname] = {arrindex: src}
                 else:
@@ -208,9 +195,9 @@ class VModule(object):
         assign = ""
         direction = self.get_io_config(parameters)
 
-        if direction == 'input':
+        if direction == "input":
             assign = "    assign {} = {};".format(parameters["IZ"], ioname)
-        elif direction == 'output':
+        elif direction == "output":
             assign = "    assign {} = {};".format(ioname, parameters["OQI"])
         elif direction is None:
             pass
@@ -220,7 +207,7 @@ class VModule(object):
         return assign
 
     def form_verilog_element(self, loc, typ: str, name: str, parameters: dict):
-        '''Creates an entry representing single Verilog submodule.
+        """Creates an entry representing single Verilog submodule.
 
         Parameters
         ----------
@@ -236,26 +223,24 @@ class VModule(object):
         Returns
         -------
         str: Verilog entry
-        '''
-        if typ == 'BIDIR':
+        """
+        if typ == "BIDIR":
 
             # We do not emit the BIDIR cell for non inout IOs
             direction = self.get_io_config(parameters)
             if direction is None:
                 return ""
-            elif direction != 'inout':
+            elif direction != "inout":
                 return self.form_simple_assign(loc, parameters)
 
         params = []
         moduletype = self.qlal4s3bmapping[typ]
         pin_map = self.qlal4s3_pinmap.get(moduletype, dict())
-        result = f'    {moduletype} {name} ('
+        result = f"    {moduletype} {name} ("
         fixedparameters = self.group_array_values(parameters)
         # get inputs, strip vector's pin indexes
         input_pins = [
-            pin.name.split('[')[0]
-            for pin in self.cells_library[typ].pins
-            if pin.direction == PinDirection.INPUT
+            pin.name.split("[")[0] for pin in self.cells_library[typ].pins if pin.direction == PinDirection.INPUT
         ]
         dummy_wires = []
 
@@ -263,7 +248,7 @@ class VModule(object):
             mapped_inpname = pin_map.get(inpname, inpname)
             if isinstance(inp, dict):
                 arr = []
-                dummy_wire = f'{moduletype}_{name}_{inpname}'
+                dummy_wire = f"{moduletype}_{name}_{inpname}"
                 max_dummy_index = 0
                 need_dummy = False
                 maxindex = max([val for val in inp.keys()])
@@ -279,14 +264,12 @@ class VModule(object):
                             need_dummy = True
                     else:
                         arr.append(inp[i])
-                arrlist = ', '.join(arr)
-                params.append(f'.{mapped_inpname}({{{arrlist}}})')
+                arrlist = ", ".join(arr)
+                params.append(f".{mapped_inpname}({{{arrlist}}})")
                 if need_dummy:
-                    dummy_wires.append(
-                        f'    wire [{max_dummy_index}:0] {dummy_wire};'
-                    )
+                    dummy_wires.append(f"    wire [{max_dummy_index}:0] {dummy_wire};")
             else:
-                params.append(f'.{mapped_inpname}({inp})')
+                params.append(f".{mapped_inpname}({inp})")
         if self.useinversionpins:
             if typ in self.inversionpins:
                 for toinvert, inversionpin in self.inversionpins[typ].items():
@@ -296,7 +279,7 @@ class VModule(object):
                         params.append(f".{inversionpin}(1'b0)")
 
         # handle BIDIRs and CLOCKs
-        if typ in ['CLOCK', 'BIDIR']:
+        if typ in ["CLOCK", "BIDIR"]:
             ioname = self.get_io_name(loc)
 
             moduletype = self.qlal4s3bmapping[typ]
@@ -304,17 +287,17 @@ class VModule(object):
 
             params.append(".{}({})".format(pin_map.get("IP", "IP"), ioname))
 
-        result += f',\n{" " * len(result)}'.join(sorted(params)) + ');\n'
-        wires = ''
+        result += f',\n{" " * len(result)}'.join(sorted(params)) + ");\n"
+        wires = ""
         for wire in dummy_wires:
-            wires += f'\n{wire}'
-        result = wires + '\n\n' + result
+            wires += f"\n{wire}"
+        result = wires + "\n\n" + result
         return result
 
     @staticmethod
     def get_element_name(type, loc):
-        '''Forms element name from its type and FASM feature name.'''
-        return f'{type}_X{loc.x}_Y{loc.y}'
+        """Forms element name from its type and FASM feature name."""
+        return f"{type}_X{loc.x}_Y{loc.y}"
 
     @staticmethod
     def get_element_type(type):
@@ -323,9 +306,9 @@ class VModule(object):
         return match.group("type")
 
     def get_bel_type_and_connections(self, loc, connections, direction):
-        '''For a given connection list returns a dictionary
+        """For a given connection list returns a dictionary
         with bel types and connections to them
-        '''
+        """
 
         cells = self.vpr_tile_grid[loc].cells
 
@@ -350,11 +333,7 @@ class VModule(object):
         for cell in cells:
             cell_name = "{}{}".format(cell.type, cell.index)
 
-            cellpins = [
-                pin.name
-                for pin in self.cells_library[cell.type].pins
-                if pin.direction == direction
-            ]
+            cellpins = [pin.name for pin in self.cells_library[cell.type].pins if pin.direction == direction]
 
             # check every connection pin if it has
             for pin in cellpins:
@@ -376,11 +355,7 @@ class VModule(object):
             cell_name = "{}{}".format(cell.type, cell.index)
 
             cell_connections[cell_name] = dict()
-            cellpins = [
-                pin.name
-                for pin in self.cells_library[cell.type].pins
-                if pin.direction == direction
-            ]
+            cellpins = [pin.name for pin in self.cells_library[cell.type].pins if pin.direction == direction]
 
             for key in connections.keys():
                 if key in cellpins:
@@ -397,27 +372,27 @@ class VModule(object):
         return cell_connections
 
     def new_io_name(self, direction):
-        '''Creates a new IO name for a given direction.
+        """Creates a new IO name for a given direction.
 
         Parameters
         ----------
         direction: str
             Direction of the IO, can be 'input' or 'output'
-        '''
+        """
         # TODO add support for inout
-        assert direction in ['input', 'output', 'inout']
-        if direction == 'output':
-            name = f'out_{self.last_output_id}'
+        assert direction in ["input", "output", "inout"]
+        if direction == "output":
+            name = f"out_{self.last_output_id}"
             self.last_output_id += 1
-        elif direction == 'input':
-            name = f'in_{self.last_input_id}'
+        elif direction == "input":
+            name = f"in_{self.last_input_id}"
             self.last_input_id += 1
         else:
             pass
         return name
 
     def get_wire(self, loc, wire, inputname):
-        '''Creates or gets an existing wire for a given source.
+        """Creates or gets an existing wire for a given source.
 
         Parameters
         ----------
@@ -431,17 +406,14 @@ class VModule(object):
         Returns
         -------
         str: wire name
-        '''
-        isoutput = self.vpr_tile_grid[loc].type == 'SYN_IO'
+        """
+        isoutput = self.vpr_tile_grid[loc].type == "SYN_IO"
         if isoutput:
             # outputs are never inverted
             inverted = False
         else:
             # determine if inverted
-            inverted = (
-                inputname in self.belinversions[loc][
-                    self.vpr_tile_grid[loc].type]
-            )
+            inverted = inputname in self.belinversions[loc][self.vpr_tile_grid[loc].type]
         wireid = Wire(wire[0], wire[1], inverted)
         if wireid in self.wires:
             # if wire already exists, use it
@@ -454,71 +426,62 @@ class VModule(object):
             wirename = self.wires[uninvertedwireid]
         else:
             srcname = self.vpr_tile_grid[wire[0]].name
-            type_connections = self.get_bel_type_and_connections(
-                wire[0], wire[1], PinDirection.OUTPUT
-            )
+            type_connections = self.get_bel_type_and_connections(wire[0], wire[1], PinDirection.OUTPUT)
             # there should be only one type here
             srctype = [type for type in type_connections.keys()][0]
             srconame = wire[1]
-            if srctype == 'SYN_IO':
+            if srctype == "SYN_IO":
                 # if source is input, use its name
                 if wire[0] not in self.ios:
-                    self.ios[wire[0]] = VerilogIO(
-                        name=self.new_io_name('input'),
-                        direction='input',
-                        ioloc=wire[0]
-                    )
-                assert self.ios[wire[0]].direction == 'input'
+                    self.ios[wire[0]] = VerilogIO(name=self.new_io_name("input"), direction="input", ioloc=wire[0])
+                assert self.ios[wire[0]].direction == "input"
                 wirename = self.ios[wire[0]].name
             else:
                 # form a new wire name
-                wirename = f'{srcname}_{srconame}'
+                wirename = f"{srcname}_{srconame}"
             if srctype not in self.elements[wire[0]]:
                 # if the source element does not exist, create it
                 self.elements[wire[0]][srctype] = Element(
-                    wire[0], self.get_element_type(srctype),
+                    wire[0],
+                    self.get_element_type(srctype),
                     self.get_element_name(srctype, wire[0]),
-                    {srconame: wirename}
+                    {srconame: wirename},
                 )
             else:
                 # add wirename to the existing element
                 self.elements[wire[0]][srctype].ios[srconame] = wirename
-            if not isoutput and srctype != 'SYN_IO':
+            if not isoutput and srctype != "SYN_IO":
                 # add wire
                 self.wires[uninvertedwireid] = wirename
             elif isoutput:
                 # add assign to output
                 self.assigns[self.ios[loc].name] = wirename
 
-        if not inverted or (
-                self.useinversionpins and
-                inputname in self.inversionpins[self.vpr_tile_grid[loc].type]):
+        if not inverted or (self.useinversionpins and inputname in self.inversionpins[self.vpr_tile_grid[loc].type]):
             # if not inverted or we're not inverting, just finish
             return wirename
 
         # else create an inverted and wire for it
-        invertername = f'{wirename}_inverter'
+        invertername = f"{wirename}_inverter"
 
-        invwirename = f'{wirename}_inv'
+        invwirename = f"{wirename}_inv"
 
-        inverterios = {'Q': invwirename, 'A': wirename}
+        inverterios = {"Q": invwirename, "A": wirename}
 
-        inverterelement = Element(wire[0], 'inv', invertername, inverterios)
-        self.elements[wire[0]]['inv'] = inverterelement
+        inverterelement = Element(wire[0], "inv", invertername, inverterios)
+        self.elements[wire[0]]["inv"] = inverterelement
         invertedwireid = Wire(wire[0], wire[1], True)
         self.wires[invertedwireid] = invwirename
         return invwirename
 
     def parse_bels(self):
-        '''Converts BELs to Verilog-like structures.'''
+        """Converts BELs to Verilog-like structures."""
         # TODO add support for direct input-to-output
         # first parse outputs to create wires for them
 
         # parse outputs first to properly handle namings
         for currloc, connections in self.designconnections.items():
-            type_connections = self.get_bel_type_and_connections(
-                currloc, connections, PinDirection.OUTPUT
-            )
+            type_connections = self.get_bel_type_and_connections(currloc, connections, PinDirection.OUTPUT)
 
             for currtype, connections in type_connections.items():
                 currname = self.get_element_name(currtype, currloc)
@@ -526,8 +489,8 @@ class VModule(object):
 
                 # Check each output
                 for output_name, (
-                        loc,
-                        wire,
+                    loc,
+                    wire,
                 ) in connections.items():
 
                     # That wire is connected to something. Skip processing
@@ -545,8 +508,7 @@ class VModule(object):
                 # If Element does not exist, create it
                 if currtype not in self.elements[currloc]:
                     self.elements[currloc][currtype] = Element(
-                        currloc, self.get_element_type(currtype), currname,
-                        outputs
+                        currloc, self.get_element_type(currtype), currname, outputs
                     )
                 # Else update IOs
                 else:
@@ -558,9 +520,7 @@ class VModule(object):
             # Current location may be a multi cell location.
             # Split the connection list into a to a set of connections
             # for each used cell type
-            type_connections = self.get_bel_type_and_connections(
-                currloc, connections, PinDirection.INPUT
-            )
+            type_connections = self.get_bel_type_and_connections(currloc, connections, PinDirection.INPUT)
 
             for currtype in type_connections:
                 currname = self.get_element_name(currtype, currloc)
@@ -568,10 +528,10 @@ class VModule(object):
                 inputs = {}
                 # form all inputs for the BEL
                 for inputname, wire in connections.items():
-                    if wire[1] == 'VCC':
+                    if wire[1] == "VCC":
                         inputs[inputname] = "1'b1"
                         continue
-                    elif wire[1] == 'GND':
+                    elif wire[1] == "GND":
                         inputs[inputname] = "1'b0"
                         continue
                     elif wire[1].startswith("CAND"):
@@ -582,21 +542,17 @@ class VModule(object):
                         continue
                     srctype = self.vpr_tile_grid[wire[0]].type
                     srctype_cells = self.vpr_tile_types[srctype].cells
-                    if len(set(srctype_cells).intersection(set(
-                        ['BIDIR', 'LOGIC', 'ASSP', 'RAM', 'MULT']))) > 0:
+                    if len(set(srctype_cells).intersection(set(["BIDIR", "LOGIC", "ASSP", "RAM", "MULT"]))) > 0:
                         # FIXME handle already inverted pins
                         # TODO handle inouts
                         wirename = self.get_wire(currloc, wire, inputname)
                         inputs[inputname] = wirename
                     else:
-                        raise Exception(
-                            'Not supported cell type {}'.format(srctype)
-                        )
+                        raise Exception("Not supported cell type {}".format(srctype))
                 if currtype not in self.elements[currloc]:
                     # If Element does not exist, create it
                     self.elements[currloc][currtype] = Element(
-                        currloc, self.get_element_type(currtype), currname,
-                        inputs
+                        currloc, self.get_element_type(currtype), currname, inputs
                     )
                 else:
                     # else update IOs
@@ -607,7 +563,7 @@ class VModule(object):
             for type, element in list(elements.items()):
 
                 # Handle IO cells
-                if element.type in ['CLOCK', 'BIDIR', 'SDIOMUX']:
+                if element.type in ["CLOCK", "BIDIR", "SDIOMUX"]:
 
                     if element.type == "CLOCK":
                         direction = "input"
@@ -625,7 +581,7 @@ class VModule(object):
                     connected_pins = set(element.ios.keys())
                     output_pins = set(
                         [
-                            pin.name.split('[')[0]
+                            pin.name.split("[")[0]
                             for pin in self.cells_library[element.type].pins
                             if pin.direction == PinDirection.OUTPUT
                         ]
@@ -642,14 +598,14 @@ class VModule(object):
     def get_io_name(self, loc):
 
         # default pin name
-        name = loc2str(loc) + '_inout'
+        name = loc2str(loc) + "_inout"
         # check if we have the original name for this io
         if self.pcf_data is not None:
             pin = self.io_to_fbio.get(loc, None)
             if pin is not None and pin in self.pcf_data:
                 name = self.pcf_data[pin]
-                name = name.replace('(', '[')
-                name = name.replace(')', ']')
+                name = name.replace("(", "[")
+                name = name.replace(")", "]")
 
         return name
 
@@ -657,43 +613,43 @@ class VModule(object):
         # decode direction
         # direction is configured by routing 1 or 0 to certain inputs
 
-        if 'IE' in ios:
-            output_en = ios['IE'] != "1'b0"
+        if "IE" in ios:
+            output_en = ios["IE"] != "1'b0"
         else:
             # outputs is enabled by default
             output_en = True
-        if 'INEN' in ios:
-            input_en = ios['INEN'] != "1'b0"
+        if "INEN" in ios:
+            input_en = ios["INEN"] != "1'b0"
         else:
             # inputs are disabled by default
             input_en = False
 
         if input_en and output_en:
-            direction = 'inout'
+            direction = "inout"
         elif input_en:
-            direction = 'input'
+            direction = "input"
         elif output_en:
-            direction = 'output'
+            direction = "output"
         else:
             direction = None
 
         # Output unrouted. Discard
-        if direction == 'input':
-            if 'IZ' not in ios:
+        if direction == "input":
+            if "IZ" not in ios:
                 return None
 
         return direction
 
     def generate_ios(self):
-        '''Generates IOs and their wires
+        """Generates IOs and their wires
 
         Returns
         -------
         None
-        '''
+        """
         for eloc, locelements in self.elements.items():
             for element in locelements.values():
-                if element.type in ['CLOCK', 'BIDIR', 'SDIOMUX']:
+                if element.type in ["CLOCK", "BIDIR", "SDIOMUX"]:
 
                     if element.type == "CLOCK":
                         direction = "input"
@@ -703,72 +659,59 @@ class VModule(object):
                     # Add the input if used
                     if direction is not None:
                         name = self.get_io_name(eloc)
-                        self.ios[eloc] = VerilogIO(
-                            name=name, direction=direction, ioloc=eloc
-                        )
+                        self.ios[eloc] = VerilogIO(name=name, direction=direction, ioloc=eloc)
 
     def generate_verilog(self):
-        '''Creates Verilog module
+        """Creates Verilog module
 
         Returns
         -------
         str: A Verilog module for given BELs
-        '''
-        ios = ''
-        wires = ''
-        assigns = ''
-        elements = ''
+        """
+        ios = ""
+        wires = ""
+        assigns = ""
+        elements = ""
 
         self.generate_ios()
 
         if len(self.ios) > 0:
-            sortedios = sorted(
-                self.ios.values(), key=lambda x: (x.direction, x.name)
-            )
+            sortedios = sorted(self.ios.values(), key=lambda x: (x.direction, x.name))
             grouped_ios = self.group_vector_signals(sortedios, True)
-            ios = '\n    '
-            ios += ',\n    '.join([f'{x[0]} {x[1]}' for x in grouped_ios])
+            ios = "\n    "
+            ios += ",\n    ".join([f"{x[0]} {x[1]}" for x in grouped_ios])
 
         grouped_wires = self.group_vector_signals(self.wires)
         if len(grouped_wires) > 0:
-            wires += '\n'
+            wires += "\n"
             for wire in grouped_wires.values():
-                wires += f'    wire {wire};\n'
+                wires += f"    wire {wire};\n"
 
         if len(self.assigns) > 0:
-            assigns += '\n'
+            assigns += "\n"
             for dst, src in self.assigns.items():
-                assigns += f'    assign {dst} = {src};\n'
+                assigns += f"    assign {dst} = {src};\n"
 
         if len(self.elements) > 0:
             for eloc, locelements in self.elements.items():
                 for element in locelements.values():
-                    if element.type != 'SYN_IO':
-                        elements += '\n'
-                        elements += self.form_verilog_element(
-                            eloc, element.type, element.name, element.ios
-                        )
+                    if element.type != "SYN_IO":
+                        elements += "\n"
+                        elements += self.form_verilog_element(eloc, element.type, element.name, element.ios)
 
-        verilog = (
-            f'module top ({ios});\n'
-            f'{wires}'
-            f'{assigns}'
-            f'{elements}'
-            f'\n'
-            f'endmodule'
-        )
+        verilog = f"module top ({ios});\n" f"{wires}" f"{assigns}" f"{elements}" f"\n" f"endmodule"
         return verilog
 
     def generate_pcf(self):
-        pcf = ''
+        pcf = ""
         for io in self.ios.values():
             if io.ioloc in self.io_to_fbio:
-                pcf += f'set_io {io.name} {self.io_to_fbio[io.ioloc]}\n'
+                pcf += f"set_io {io.name} {self.io_to_fbio[io.ioloc]}\n"
         return pcf
 
     def generate_qcf(self):
-        qcf = '#[Fixed Pin Placement]\n'
+        qcf = "#[Fixed Pin Placement]\n"
         for io in self.ios.values():
             if io.ioloc in self.io_to_fbio:
-                qcf += f'place {io.name} {self.io_to_fbio[io.ioloc]}\n'
+                qcf += f"place {io.name} {self.io_to_fbio[io.ioloc]}\n"
         return qcf

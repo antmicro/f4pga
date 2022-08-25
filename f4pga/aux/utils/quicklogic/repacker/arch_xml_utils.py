@@ -40,9 +40,7 @@ def get_parent_pb(xml_pbtype):
     Returns a parent pb_type of the given one or none if it is a top-level
     complex block
     """
-    assert xml_pbtype.tag in [
-        "pb_type", "mode", "interconnect"
-    ], xml_pbtype.tag
+    assert xml_pbtype.tag in ["pb_type", "mode", "interconnect"], xml_pbtype.tag
 
     # Get immediate parent
     xml_parent = xml_pbtype.getparent()
@@ -133,14 +131,12 @@ def yield_pb_children(xml_parent):
 # =============================================================================
 
 INTERCONNECT_PORT_SPEC_RE = re.compile(
-    r"((?P<pbtype>[A-Za-z0-9_]+)(\[(?P<indices>[0-9:]+)\])?\.)"
-    r"(?P<port>[A-Za-z0-9_]+)(\[(?P<bits>[0-9:]+)\])?"
+    r"((?P<pbtype>[A-Za-z0-9_]+)(\[(?P<indices>[0-9:]+)\])?\.)" r"(?P<port>[A-Za-z0-9_]+)(\[(?P<bits>[0-9:]+)\])?"
 )
 
 
 def get_pb_and_port(xml_ic, port_spec):
-    """
-    """
+    """ """
     assert xml_ic.tag == "interconnect"
 
     # Match the port name
