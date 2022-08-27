@@ -163,6 +163,8 @@ jobs:
         if: matrix.flow == 'SymbiFlow'
         run: |
           . ./scripts/activate.sh
+          sed -i 's#2>&1 > /dev/null##g' f4pga-examples/common/common.mk
+          cat f4pga-examples/common/common.mk
           cd f4pga-examples/${{ matrix.fam }}
           export F4PGA_USE_DEPRECATED=true
           case '${{ matrix.fam }}' in
