@@ -54,7 +54,7 @@ echo '::group::Install arch-defs'
 
 mkdir -p "$F4PGA_INSTALL_DIR_FAM"
 
-F4PGA_HASH='674771c'
+F4PGA_HASH='6b10317'
 
 case "$FPGA_FAM" in
   xc7)    PACKAGES='install-xc7 xc7a50t_test';;
