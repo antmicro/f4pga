@@ -79,4 +79,6 @@ echo '::group::Create environment'
 
 conda env create -f $F4PGA_INSTALL_DIR_FAM/"$FPGA_FAM"_env/"$FPGA_FAM"_environment.yml
 
+conda info --envs
+
 echo '::endgroup::'
