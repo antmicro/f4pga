@@ -23,7 +23,7 @@ from sys import argv as sys_argv, stdout, stderr
 from os import environ
 from pathlib import Path
 from shutil import which
-from subprocess import check_call
+from subprocess import check_call, run as subprocess_run
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
 from f4pga.context import FPGA_FAM, F4PGA_SHARE_DIR
@@ -598,58 +598,38 @@ fi
 
 def write_bitstream():
     print("[F4PGA] Running (deprecated) write bitstream")
-    p_run_bash_cmds(
-        """
-set -e
-echo "Writing bitstream ..."
-FRM2BIT=""
-if [ ! -z ${FRAMES2BIT} ]; then FRM2BIT="--frm2bit ${FRAMES2BIT}"; fi
-"""
-        + f"""
-eval set -- $(
-  getopt \
-    --options=d:f:b:p: \
-    --longoptions=device:,fasm:,bit:,part: \
-    --name $0 -- {' '.join(sys_argv[1:])}
-)
-"""
-        + """
-DEVICE=""
-FASM=""
-BIT=""
-PART=xc7a35tcpg236-1
-while true; do
-  case "$1" in
-    -d|--device) DEVICE=$2; shift 2; ;;
-    -p|--part)   PART=$2;   shift 2; ;;
-    -f|--fasm)   FASM=$2;   shift 2; ;;
-    -b|--bit)    BIT=$2;    shift 2; ;;
-    --) break ;;
-  esac
-done
-DATABASE_DIR=${DATABASE_DIR:-$(prjxray-config)}
-if [ -z $DEVICE ]; then
-  # Try to find device name. Accept only when exactly one is found
-  PART_DIRS=(${DATABASE_DIR}/*/${PART})
-  if [ ${#PART_DIRS[@]} -eq 1 ]; then
-    DEVICE=$(basename $(dirname "${PART_DIRS[0]}"))
-  else
-    echo "Please provide device name"
-    exit 1
-  fi
-fi
-DBROOT=`realpath ${DATABASE_DIR}/${DEVICE}`
-if [ -z $FASM ]; then echo "Please provide fasm file name"; exit 1; fi
-if [ -z $BIT ]; then echo "Please provide bit file name"; exit 1; fi
-xcfasm \
-  --db-root ${DBROOT} \
-  --part ${PART} \
-  --part_file ${DBROOT}/${PART}/part.yaml \
-  --sparse \
-  --emit_pudc_b_pullup \
-  --fn_in ${FASM} \
-  --bit_out ${BIT} ${FRM2BIT}
-"""
+    parser = ArgumentParser(description=__doc__, formatter_class=RawDescriptionHelpFormatter)
+    parser.add_argument("--device", "-d", required=True, type=str, help="")
+    parser.add_argument("--part", "-p", required=False, default="xc7a35tcpg236-1", type=str, help="")
+    parser.add_argument("--fasm", "-f", required=True, type=str, help="")
+    parser.add_argument("--bit", "-b", required=True, type=str, help="")
+    args = parser.parse_args()
+
+    db_dir = Path(
+        environ.get(
+            "DATABASE_DIR", subprocess_run("prjxray-config", capture_output=True).stdout.decode("utf-8").strip()
+        )
+    )
+
+    frames2bit = environ.get("FRAMES2BIT")
+
+    check_call(
+        [
+            "xcfasm",
+            "--db-root",
+            db_dir / args.device,
+            "--part",
+            args.part,
+            "--part_file",
+            db_dir / args.device / args.part / "part.yaml",
+            "--sparse",
+            "--emit_pudc_b_pullup",
+            "--fn_in",
+            args.fasm,
+            "--bit_out",
+            args.bit,
+        ]
+        + ([] if frames2bit is None else ["--frm2bit", frames2bit])
     )
 
 
