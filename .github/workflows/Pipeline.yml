@@ -30,8 +30,7 @@ jobs:
 
       - name: 🧰 Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: recursive
+        with: { submodules: recursive }
 
       - name: Check Licenses
         uses: SymbiFlow/actions/checks@main
@@ -45,8 +44,7 @@ jobs:
 
       - name: 🧰 Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: recursive
+        with: { submodules: recursive }
 
       - name: 🐍 Setup Python
         uses: actions/setup-python@v4
@@ -67,8 +65,7 @@ jobs:
 
       - name: 🧰 Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: recursive
+        with: { submodules: recursive }
 
       - name: 🛠️ Setup environment
         run: |
