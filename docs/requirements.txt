@@ -1,7 +1,14 @@
 myst-parser
 pyyaml
 sphinx>=4.5.0
+sphinx_tabs
 sphinxcontrib-bibtex
-https://github.com/f4pga/sphinx_f4pga_theme/archive/f4pga.zip#sphinx-f4pga-theme
-https://github.com/SymbiFlow/sphinx-verilog-domain/archive/master.zip#sphinx-verilog-domain
 tabulate
+
+https://github.com/antmicro/sphinx-immaterial/releases/download/tip/sphinx_immaterial-0.0.post1.tip-py3-none-any.whl
+
+https://github.com/antmicro/antmicro-sphinx-utils/archive/main.zip
+https://github.com/antmicro/sphinxcontrib-internal/archive/master.zip
+https://github.com/return42/linuxdoc/archive/master.zip
+
+https://github.com/SymbiFlow/sphinx-verilog-domain/archive/master.zip#sphinx-verilog-domain

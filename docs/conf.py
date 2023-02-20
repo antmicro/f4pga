@@ -23,6 +23,13 @@
 import sys, os
 from pathlib import Path
 
+from antmicro_sphinx_utils.defaults import (
+    extensions as default_extensions,
+    myst_enable_extensions as default_myst_enable_extensions,
+    antmicro_html,
+    antmicro_latex
+)
+
 from tabulate import tabulate
 
 ROOT = Path(__file__).resolve().parent
@@ -66,24 +73,21 @@ copyright = f'{authors}, 2019 - 2022'
 version = ''
 release = '' # The full version, including alpha/beta/rc tags.
 
-extensions = [
+extensions = list(set(default_extensions + [
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
-    'sphinx_verilog_domain',
     'sphinxcontrib.bibtex',
-    'myst_parser'
-]
+#    'sphinx_verilog_domain',
+]))
+
+myst_enable_extensions = list(set(default_myst_enable_extensions + [
+    "colon_fence",
+]))
 
 bibtex_default_style = 'plain'
 bibtex_bibfiles = ['refs.bib']
 
-myst_enable_extensions = [
-    "colon_fence",
-]
-
 numfig = True
-
-templates_path = ['_templates']
 
 source_suffix = {
     '.rst': 'restructuredtext',
@@ -98,29 +102,24 @@ exclude_patterns = [
     'env'
 ]
 
-pygments_style = 'default'
-
-rst_prolog = """
-.. role:: raw-latex(raw)
-   :format: latex
-
-.. role:: raw-html(raw)
-   :format: html
-"""
-
 # -- Options for HTML output -------------------------------------------------------------------------------------------
 
-html_show_sourcelink = True
+html_theme = 'sphinx_immaterial'
 
-html_theme = 'sphinx_f4pga_theme'
+html_last_updated_fmt = today_fmt
 
-html_theme_options = {
-    'repo_name': 'chipsalliance/f4pga',
-    'github_url' : 'https://github.com/chipsalliance/f4pga',
-    'globaltoc_collapse': True,
-    'color_primary': 'indigo',
-    'color_accent': 'blue',
-}
+html_show_sphinx = False
+
+(
+    _,
+    html_theme_options,
+    html_context
+) = antmicro_html(
+    gh_slug='chipsalliance/f4pga',
+    pdf_url=f"{basic_filename}.pdf",
+)
+
+html_title = project
 
 html_static_path = ['_static']
 
